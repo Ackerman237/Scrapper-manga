@@ -20,7 +20,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Logging
-const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  redact: [
+    'req.headers.authorization',
+    'req.headers.x-api-key',
+    'req.headers.cookie',
+    'req.headers.cookie*',
+    'req.url'
+  ],
+});
 app.use(pinoHttp({ logger }));
 
 // Security middlewares

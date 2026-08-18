@@ -139,13 +139,34 @@ export const proxyImage = async (req, res) => {
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=86400');
 
-    // Stream response body to client to avoid memory bloat
+    // Stream response body to client to avoid memory bloat — add byte-limiter
     try {
-      // Convert Web ReadableStream to Node Readable if necessary
+      // Byte-limiting Transform
+      class ByteLimitStream extends stream.Transform {
+        constructor(limit) {
+          super();
+          this.limit = limit;
+          this.count = 0;
+        }
+        _transform(chunk, _encoding, callback) {
+          this.count += chunk.length;
+          if (this.count > this.limit) {
+            callback(new Error('SIZE_LIMIT_EXCEEDED'));
+            return;
+          }
+          callback(null, chunk);
+        }
+      }
+
+      const byteLimiter = new ByteLimitStream(maxBytes);
       const nodeStream = stream.Readable.fromWeb ? stream.Readable.fromWeb(imageRes.body) : imageRes.body;
-      await pipeline(nodeStream, res);
+
+      await pipeline(nodeStream, byteLimiter, res);
       return;
     } catch (err) {
+      if (err && err.message === 'SIZE_LIMIT_EXCEEDED') {
+        return res.status(413).json({ success: false, message: 'Gambar terlalu besar (stream limit)' });
+      }
       // If client aborted or stream error
       return res.status(500).json({ success: false, message: 'Gagal mengirim gambar' });
     }
