@@ -5,6 +5,7 @@ import {
   getChapterImages, 
   proxyImage 
 } from '../controllers/mangaController.js';
+import apiKeyAuth from '../lib/apiKeyAuth.js';
 import {
   getNekoList,
   getNekoCategory,
@@ -18,7 +19,7 @@ const router = Router();
 router.get('/manga', getMangaList);
 router.get('/manga/detail', getMangaDetail);
 router.get('/chapter', getChapterImages);
-router.get('/image-proxy', proxyImage); // <-- Endpoint Proxy Gambar
+router.get('/image-proxy', apiKeyAuth, proxyImage); // <-- Endpoint Proxy Gambar (protected)
 router.get('/neko', getNekoList);
 router.get('/neko/categories', getNekoCategories);
 router.get('/neko/category', getNekoCategory);

@@ -5,6 +5,8 @@ import {
   searchManga
 } from '../lib/scraper.js';
 import { safeHttpUrl } from '../lib/security.js';
+import stream from 'stream';
+import { pipeline } from 'stream/promises';
 
 export const getMangaList = async (req, res) => {
   try {
@@ -103,25 +105,50 @@ export const proxyImage = async (req, res) => {
       ? `https://doujin.desu.xxx/reader/${chapterId}`
       : 'https://doujin.desu.xxx/';
 
+    const controller = new AbortController();
+    const timeoutMs = parseInt(process.env.IMAGE_PROXY_TIMEOUT_MS) || 15000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     const imageRes = await fetch(imageUrl, {
+      signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
         Referer: refererUrl,
         Origin: 'https://doujin.desu.xxx',
         Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
       },
+    }).catch((err) => {
+      clearTimeout(timeoutId);
+      throw err;
     });
+
+    clearTimeout(timeoutId);
 
     if (!imageRes.ok) {
       return res.status(imageRes.status).json({ success: false, message: 'Gagal mengambil gambar dari CDN' });
+    }
+
+    // Check content-length if available
+    const maxBytes = parseInt(process.env.IMAGE_PROXY_MAX_BYTES) || 5 * 1024 * 1024; // 5 MB
+    const len = imageRes.headers.get('content-length');
+    if (len && Number(len) > maxBytes) {
+      return res.status(413).json({ success: false, message: 'Gambar terlalu besar' });
     }
 
     const contentType = imageRes.headers.get('content-type') || 'image/webp';
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=86400');
 
-    const arrayBuffer = await imageRes.arrayBuffer();
-    return res.send(Buffer.from(arrayBuffer));
+    // Stream response body to client to avoid memory bloat
+    try {
+      // Convert Web ReadableStream to Node Readable if necessary
+      const nodeStream = stream.Readable.fromWeb ? stream.Readable.fromWeb(imageRes.body) : imageRes.body;
+      await pipeline(nodeStream, res);
+      return;
+    } catch (err) {
+      // If client aborted or stream error
+      return res.status(500).json({ success: false, message: 'Gagal mengirim gambar' });
+    }
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
