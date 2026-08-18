@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Manga — Doujin Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="/doujinPage/style.css">
+</head>
+
+<body>
+
+  <!-- HEADER / NAVBAR (sama seperti index.html) -->
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <a href="/">
+          <h1>Doujin Library</h1>
+        </a>
+      </div>
+
+      <nav class="nav-links">
+        <a href="/">HOME</a>
+        <a href="#" class="active">ALL</a>
+        <a href="#">CATEGORIES</a>
+        <a href="#">BLOG</a>
+        <a href="#">LEADERBOARD</a>
+        <a href="#">VIP</a>
+      </nav>
+
+      <form id="searchForm" class="search-box">
+        <input type="text" id="searchInput" placeholder="Cari manga...">
+        <button type="submit">CARI</button>
+      </form>
+    </div>
+  </header>
+
+  <main>
+    <div id="detailContainer">
+
+      <!-- state loading, diganti isinya oleh detail.js setelah fetch selesai -->
+      <p class="loading" id="detailLoading">Memuat detail manga...</p>
+
+      <!-- Layout asli, disembunyikan sampai data siap. detail.js tinggal
+           mengisi elemen-elemen ber-id di bawah ini lalu menghapus class "hidden" -->
+      <div class="detail-layout hidden" id="detailLayout" style="display:none;">
+
+        <!-- ================= KOLOM KIRI: COVER ================= -->
+        <aside class="detail-cover-card">
+
+          <div class="detail-cover-frame" id="coverFrame" style="background-image:url('');">
+            <img id="coverImg" src="" alt="Cover">
+          </div>
+
+          <h2 class="detail-title" id="mTitle">—</h2>
+          <p class="detail-alt-titles" id="mAltTitlesShort">—</p>
+          <button class="detail-alt-toggle" id="altTitlesToggle" type="button">▾</button>
+
+          <div class="detail-badge-row">
+            <span class="detail-badge type" id="mTypeBadge">
+              <span id="mTypeFlag">🇰🇷</span> <span id="mTypeText">Manhwa</span>
+            </span>
+            <span class="detail-badge status" id="mStatusBadge">
+              ⟳ <span id="mStatusText">Ongoing</span>
+            </span>
+          </div>
+
+          <button class="btn-read-now" id="readNowBtn" type="button">
+            📖 READ NOW
+          </button>
+
+          <div class="detail-secondary-row">
+            <button class="btn-bookmark" id="bookmarkBtn" type="button">🔖 BOOKMARK</button>
+            <button class="btn-notify" id="notifyBtn" type="button" aria-label="Notifikasi">🔔</button>
+          </div>
+
+          <div class="detail-icon-row">
+            <button class="icon-btn" id="listIconBtn" title="Daftar chapter">☰</button>
+            <button class="icon-btn" id="commentIconBtn" title="Komentar">💬</button>
+            <button class="icon-btn" id="shareIconBtn" title="Bagikan">🔗</button>
+            <button class="icon-btn" id="reportIconBtn" title="Laporkan">⚑</button>
+          </div>
+        </aside>
+
+        <!-- ================= KOLOM KANAN ================= -->
+        <div class="detail-main">
+
+          <div class="detail-tabs">
+            <button class="detail-tab active" id="tabInfo" type="button">📖 Detail Info</button>
+            <button class="detail-tab" id="tabMoreSeries" type="button">👍 More Series</button>
+          </div>
+
+          <!-- panel: Series Information -->
+          <section class="panel">
+            <h3 class="panel-title"><span class="icon">ⓘ</span> Series Information</h3>
+
+            <div class="info-body">
+              <div class="info-grid">
+
+                <div>
+                  <div class="info-row-label">TYPE</div>
+                  <div class="info-row-value"><span id="infoTypeFlag">🇰🇷</span> <span id="infoType">—</span></div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">STATUS</div>
+                  <div class="info-row-value" style="color:var(--ink);">⟳ <span id="infoStatus">—</span></div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">ALTERNATIVE TITLES</div>
+                  <div class="info-row-value" id="infoAltTitles" style="font-weight:400;">—</div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">AUTHORS</div>
+                  <div class="info-row-value" id="infoAuthors">—</div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">GROUPS</div>
+                  <div class="info-row-value" id="infoGroups">N/A</div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">SERIES</div>
+                  <div class="info-row-value" id="infoSeries">—</div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">SERIALIZATION</div>
+                  <div class="info-row-value" id="infoSerialization">—</div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">CHARACTERS</div>
+                  <div class="info-row-value" id="infoCharacters">N/A</div>
+                </div>
+
+                <div>
+                  <div class="info-row-label">GENRES</div>
+                  <div class="genre-tags" id="genreTags"><!-- genre-tag diisi JS --></div>
+                </div>
+
+              </div>
+
+              <!-- rating box kanan -->
+              <div class="rating-box">
+                <div class="rating-score" id="ratingScore">0.0</div>
+                <div class="rating-stars" id="ratingStars">★★★★☆</div>
+                <div class="views-label">👁 VIEWS</div>
+                <div class="views-value" id="viewsValue">0</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- panel: Synopsis -->
+          <section class="panel">
+            <h3 class="panel-title"><span class="icon">☰</span> Synopsis</h3>
+            <p class="synopsis-text" id="synopsisText">—</p>
+            <button class="show-more-btn" id="synopsisToggle" type="button">SHOW MORE ▾</button>
+          </section>
+
+          <!-- panel: List Chapter -->
+          <section class="panel">
+            <div class="chapter-panel-head">
+              <h3 class="panel-title" style="margin:0;"><span class="icon">📖</span> List Chapter (<span id="chapterCount">0</span>)</h3>
+              <div class="chapter-tools">
+                <div class="chapter-search">
+                  <span class="icon">🔍</span>
+                  <input type="text" id="chapterSearch" placeholder="Cari Chapter Ex: 99">
+                </div>
+                <button class="sort-btn" id="chapterSortBtn" title="Urutkan">⇅</button>
+              </div>
+            </div>
+
+            <div class="chapter-list-detail" id="chapterList">
+              <!-- chapter-row diisi JS -->
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <p class="error hidden" id="detailError" style="display:none;">Gagal memuat detail manga.</p>
+    </div>
+  </main>
+
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+
+  <script src="/doujinPage/js/detail.js" defer></script>
+</body>
+</html>
