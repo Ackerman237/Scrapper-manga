@@ -1,0 +1,25 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import apiRoutes from './routes/api.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// 1. Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 2. Serve Static Files (Folder website/ untuk HTML, CSS, & JS Frontend)
+app.use(express.static(path.join(__dirname, 'website')));
+
+// 3. Routing API
+app.use('/api', apiRoutes);
+
+// 4. Jalankan Server
+app.listen(PORT, () => {
+  console.log(`🚀 Server MVC berjalan di http://localhost:${PORT}`);
+});
