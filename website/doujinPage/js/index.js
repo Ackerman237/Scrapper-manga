@@ -59,8 +59,9 @@ async function loadManga(query = '', page = 1, isAppend = false) {
         manga.chapters.slice(0, 2).forEach(ch => {
           const chId = ch.id || ch.chapter_id || '';
           const isNew = ch.isNew ? '<span class="badge-new">NEW</span>' : '';
+          // PERBAIKAN: Mengarahkan path eksplisit ke /doujinPage/reader.html
           chaptersHTML += `
-            <a href="/reader.html?id=${chId}" class="chapter-btn" onclick="event.stopPropagation();">
+            <a href="/doujinPage/reader.html?id=${encodeURIComponent(chId)}" class="chapter-btn" onclick="event.stopPropagation();">
               <span>${ch.title || 'Chapter ' + ch.chapter} ${isNew}</span>
               <span class="time-ago">${ch.date || ch.releaseTime || ''}</span>
             </a>
@@ -70,7 +71,7 @@ async function loadManga(query = '', page = 1, isAppend = false) {
 
       card.innerHTML = `
         <div class="thumb-container" data-slug="${mangaSlug}">
-          <img src="${manga.thumb || manga.cover}" alt="${manga.title}" loading="lazy">
+          <img src="${manga.thumb || manga.cover}" alt="${manga.title}" loading="lazy" referrerpolicy="no-referrer">
           <span class="rating-tag">⭐ ${manga.rating ?? '-'}</span>
         </div>
         <div class="manga-info">
@@ -79,10 +80,10 @@ async function loadManga(query = '', page = 1, isAppend = false) {
         </div>
       `;
 
-      // Event listener untuk redirect detail tanpa onclick inline
+      // PERBAIKAN: Mengarahkan path eksplisit ke /doujinPage/detail.html
       card.querySelectorAll('[data-slug]').forEach(el => {
         el.addEventListener('click', () => {
-          window.location.href = `/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
+          window.location.href = `/doujinPage/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
         });
       });
 

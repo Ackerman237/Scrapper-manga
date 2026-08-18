@@ -57,12 +57,30 @@ async function renderDetail() {
     const data = await fetchMangaDetail(slug);
 
     // Fallback properti gambar & data
-    const coverUrl = data.cover || data.thumb || "https://placehold.co/420x560?text=No+Cover";
+    const coverUrl = data.cover || data.thumb || data.coverUrl || "https://placehold.co/420x560?text=No+Cover";
     const titleText = data.title || "Tanpa Judul";
-    const altTitlesArr = Array.isArray(data.altTitles) ? data.altTitles : [];
+    const altTitlesArr = Array.isArray(data.altTitles)
+      ? data.altTitles
+      : typeof data.altTitles === 'string'
+        ? data.altTitles.split(/[\,\n|]+/).map((s) => s.trim()).filter(Boolean)
+        : [];
     const altShort = altTitlesArr.join(", ") || "-";
     const genresArr = Array.isArray(data.genres) ? data.genres : [];
+    const authorText = data.authors || data.author || "-";
+    const groupsText = data.groups || "-";
+    const seriesText = data.series || data.title || "-";
+    const serializationText = data.serialization || "-";
+    const charactersText = data.characters || "-";
+    const statusText = data.status || "Ongoing";
+    const typeText = data.type || "Manga";
+    const typeFlagText = data.typeFlag || "??";
     const chaptersArr = Array.isArray(data.chapters) ? data.chapters : [];
+    const chaptersAsc = [...chaptersArr].sort((a, b) => {
+      const an = Number(a.number || a.chapter || 0);
+      const bn = Number(b.number || b.chapter || 0);
+      if (Number.isFinite(an) && Number.isFinite(bn) && an !== bn) return an - bn;
+      return 0;
+    });
 
     // ---- Cover ----
     if (el("coverFrame")) el("coverFrame").style.backgroundImage = `url('${coverUrl}')`;
@@ -74,20 +92,20 @@ async function renderDetail() {
     // ---- Judul & Badge ----
     if (el("mTitle")) el("mTitle").textContent = titleText;
     if (el("mAltTitlesShort")) el("mAltTitlesShort").textContent = altShort;
-    if (el("mTypeFlag")) el("mTypeFlag").textContent = data.typeFlag || "📖";
-    if (el("mTypeText")) el("mTypeText").textContent = data.type || "Manga";
-    if (el("mStatusText")) el("mStatusText").textContent = data.status || "Ongoing";
+    if (el("mTypeFlag")) el("mTypeFlag").textContent = typeFlagText;
+    if (el("mTypeText")) el("mTypeText").textContent = typeText;
+    if (el("mStatusText")) el("mStatusText").textContent = statusText;
 
     // ---- Panel Series Information ----
-    if (el("infoTypeFlag")) el("infoTypeFlag").textContent = data.typeFlag || "📖";
-    if (el("infoType")) el("infoType").textContent = data.type || "Manga";
-    if (el("infoStatus")) el("infoStatus").textContent = data.status || "Ongoing";
+    if (el("infoTypeFlag")) el("infoTypeFlag").textContent = typeFlagText;
+    if (el("infoType")) el("infoType").textContent = typeText;
+    if (el("infoStatus")) el("infoStatus").textContent = statusText;
     if (el("infoAltTitles")) el("infoAltTitles").textContent = altShort;
-    if (el("infoAuthors")) el("infoAuthors").textContent = data.authors || data.author || "-";
-    if (el("infoGroups")) el("infoGroups").textContent = data.groups || "-";
-    if (el("infoSeries")) el("infoSeries").textContent = data.series || data.type || "-";
-    if (el("infoSerialization")) el("infoSerialization").textContent = data.serialization || "-";
-    if (el("infoCharacters")) el("infoCharacters").textContent = data.characters || "-";
+    if (el("infoAuthors")) el("infoAuthors").textContent = authorText;
+    if (el("infoGroups")) el("infoGroups").textContent = groupsText;
+    if (el("infoSeries")) el("infoSeries").textContent = seriesText;
+    if (el("infoSerialization")) el("infoSerialization").textContent = serializationText;
+    if (el("infoCharacters")) el("infoCharacters").textContent = charactersText;
 
     // Genre Tags
     const genreWrap = el("genreTags");
@@ -114,7 +132,7 @@ async function renderDetail() {
     }
 
     // ---- Synopsis ----
-    if (el("synopsisText")) el("synopsisText").textContent = data.synopsis || "Tidak ada sinopsis.";
+    if (el("synopsisText")) el("synopsisText").textContent = data.synopsis || data.summary || data.description || "Tidak ada sinopsis.";
 
     // ---- Daftar Chapter ----
     if (el("chapterCount")) el("chapterCount").textContent = chaptersArr.length;
@@ -130,7 +148,8 @@ async function renderDetail() {
           const chViews = ch.views ? Number(ch.views).toLocaleString("id-ID") : "-";
 
           const row = document.createElement("a");
-          row.href = `/reader.html?id=${encodeURIComponent(chId)}`;
+          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/reader.html
+          row.href = `/doujinPage/reader.html?id=${encodeURIComponent(chId)}`;
           row.className = "chapter-row" + (idx === 0 ? " is-latest" : "");
           row.innerHTML = `
             <div class="chapter-number">${chNum}</div>
@@ -151,10 +170,12 @@ async function renderDetail() {
     // ---- Tombol Read Now -> Navigasi ke Chapter Pertama / Terbaru ----
     const readNowBtn = el("readNowBtn");
     if (readNowBtn) {
-      if (chaptersArr.length > 0) {
-        const firstChId = chaptersArr[0].id || chaptersArr[0].chapter_id || chaptersArr[0].number || chaptersArr[0].chapter;
+      if (chaptersAsc.length > 0) {
+        const firstCh = chaptersAsc[0];
+        const firstChId = firstCh.id || firstCh.chapter_id || firstCh.number || firstCh.chapter;
         readNowBtn.onclick = () => {
-          window.location.href = `/reader.html?id=${encodeURIComponent(firstChId)}`;
+          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/reader.html
+          window.location.href = `/doujinPage/reader.html?id=${encodeURIComponent(firstChId)}`;
         };
       } else {
         readNowBtn.style.display = "none";

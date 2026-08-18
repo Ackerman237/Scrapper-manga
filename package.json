@@ -8,7 +8,9 @@
     "start": "node --env-file=.env server.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.22.2",
+    "https-proxy-agent": "^9.1.0",
+    "socks-proxy-agent": "^10.1.0"
   },
   "engines": {
     "node": ">=18"

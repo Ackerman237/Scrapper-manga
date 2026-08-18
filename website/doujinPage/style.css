@@ -957,6 +957,191 @@ main {
 
 .chapter-row.is-latest .chapter-row-body h4 { color: var(--ink); }
 
+/* ---------- reader page ---------- */
+
+.reader {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 100%;
+  position: relative;
+}
+
+.reader-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease, margin 0.2s ease;
+}
+
+.reader-header-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.reader-header-copy h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.reader-header-copy .meta {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+
+.reader-top-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.reader-header.chrome-hidden {
+}
+
+.reader-toolbar.is-visible,
+.reader-header-copy.is-visible,
+.reader-top-actions.is-visible,
+.reader-float-controls.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.reader-toolbar.is-hidden,
+.reader-header-copy.is-hidden,
+.reader-top-actions.is-hidden,
+.reader-float-controls.is-hidden {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+.reader-nav-btn,
+.reader-next-chapter {
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.reader-icon-btn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0e0c0a;
+  border: 1px solid rgba(236, 230, 220, 0.08);
+  color: var(--text);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0;
+  position: relative;
+}
+
+.reader-icon-btn::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  display: block;
+  background: currentColor;
+  opacity: 0.9;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.reader-icon-btn.is-prev::before { mask-image: linear-gradient(90deg, transparent 35%, currentColor 35% 65%, transparent 65%); }
+.reader-icon-btn.is-play::before { clip-path: polygon(30% 20%, 80% 50%, 30% 80%); background: var(--ink); }
+.reader-icon-btn.is-next::before { mask-image: linear-gradient(90deg, transparent 35%, currentColor 35% 65%, transparent 65%); transform: rotate(180deg); }
+.reader-icon-btn.is-home::before { clip-path: polygon(50% 15%, 15% 48%, 25% 48%, 25% 85%, 75% 85%, 75% 48%, 85% 48%); background: currentColor; }
+
+.reader-icon-btn:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.reader-nav-btn:hover,
+.reader-next-chapter:hover {
+  background: var(--card-hover);
+  border-color: var(--ink);
+}
+
+.reader-nav-btn.is-disabled,
+.reader-next-chapter.is-disabled,
+.reader-nav-btn:disabled,
+.reader-next-chapter:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.reader-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.reader-pages img {
+  width: min(100%, 980px);
+  height: auto;
+  display: block;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+}
+
+.reader-end-sentinel {
+  width: 100%;
+  height: 1px;
+}
+
+.reader-next-chapter {
+  align-self: center;
+  margin-top: 10px;
+}
+
+.reader-float-controls {
+  position: sticky;
+  top: calc(100vh - 84px);
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-self: center;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(236, 230, 220, 0.08);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+  margin: 8px 0 0;
+  z-index: 30;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1024px) {
