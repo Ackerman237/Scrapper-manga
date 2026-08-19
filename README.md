@@ -89,13 +89,13 @@ cd Scrapper-manga
 npm install
 ```
 
-3. Setup environment variables:
+3. Set up environment variables:
 ```bash
 cp .env.example .env
-# Update .env with your specific configurations
+# Update .env with your specific configuration
 ```
 
-> **Note:** Konfigurasi `.env` dilakukan secara mandiri, lihat caranya di [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) bagian `.env.example`, atau lihat caranya di README.md repo asli.
+> **Note:** Environment configuration must be set up independently. Refer to the `.env.example` section in [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) or its original README.md for detailed instructions.
 
 4. Run the server:
 ```bash
@@ -125,8 +125,6 @@ This is a personal learning project. Features and architecture are subject to ch
 This project is heavily adapted and inspired by the following repository:
 
 - [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) — Used as the primary foundation for the scraping logic, API structure, and overall project architecture.
-
-> **Note:** Konfigurasi `.env` dilakukan secara mandiri, lihat caranya di [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) bagian `.env.example`, atau lihat caranya di README.md repo asli.
 
 ---
 
