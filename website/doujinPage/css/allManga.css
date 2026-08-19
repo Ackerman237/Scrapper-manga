@@ -433,30 +433,78 @@
 
 
 /* =========================================================
-   PAGE INDICATOR
+   PAGE NUMBERS
    ========================================================= */
 
-.page-indicator {
-  min-width: 90px;
+.page-numbers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  text-align: center;
+  gap: 6px;
 
-  padding: 10px 14px;
+  min-width: 160px;
+}
 
-  font-family: var(--font-display);
 
-  font-size: 12px;
-  font-weight: 600;
+.page-number {
+  width: 38px;
+  height: 38px;
 
-  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+
+  background: var(--card);
 
   color: var(--text-muted);
 
-  background: var(--bg-alt);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
 
-  border: 1px solid var(--border-soft);
+  cursor: pointer;
 
-  border-radius: var(--radius);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.page-number:hover:not(.active) {
+  border-color: var(--ink);
+
+  color: var(--text);
+
+  transform: translateY(-2px);
+}
+
+
+.page-number.active {
+  background: var(--ink);
+
+  border-color: var(--ink);
+
+  color: var(--text);
+
+  cursor: default;
+}
+
+
+.page-ellipsis {
+  min-width: 20px;
+
+  text-align: center;
+
+  color: var(--text-faint);
+
+  font-family: var(--font-display);
+  font-size: 12px;
 }
 
 
@@ -483,6 +531,20 @@
 
 
 @media (max-width: 700px) {
+
+  .page-numbers {
+  gap: 4px;
+
+  min-width: auto;
+}
+
+
+.page-number {
+  width: 34px;
+  height: 34px;
+
+  font-size: 10px;
+}
 
   .manga-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -523,6 +585,20 @@
 
 
 @media (max-width: 420px) {
+
+  .page-number {
+  width: 30px;
+  height: 30px;
+
+  font-size: 9px;
+}
+
+
+.page-ellipsis {
+  min-width: 12px;
+
+  font-size: 9px;
+}
 
   .manga-grid {
     gap: 10px;

@@ -74,18 +74,53 @@ async function loadManga(query = '', page = 1) {
         ? result
         : (result.data || result.results || []);
 
+    const pagination =
+      result?.pagination || {
+        page,
+        limit: currentLimit,
+        hasPrevious: page > 1,
+        hasNext: mangaList.length === currentLimit
+      };
+
     grid.innerHTML = '';
+    renderPagination(pagination);
 
     // =========================
     // DATA KOSONG
     // =========================
 
     if (mangaList.length === 0) {
-      grid.innerHTML =
-        '<p class="error">Manga tidak ditemukan.</p>';
 
-      if (nextBtn) {
-        nextBtn.disabled = true;
+      grid.innerHTML = `
+        <div class="empty-state">
+          <p>Manga tidak ditemukan.</p>
+
+          ${
+            page > 1
+              ? '<button id="backPreviousPage" class="retry-btn">← KEMBALI KE HALAMAN SEBELUMNYA</button>'
+              : ''
+          }
+        </div>
+      `;
+
+      renderPagination({
+        page,
+        hasPrevious: page > 1,
+        hasNext: false
+      });
+
+      const backPreviousPage =
+        document.getElementById(
+          'backPreviousPage'
+        );
+
+      if (backPreviousPage) {
+        backPreviousPage.addEventListener(
+          'click',
+          () => {
+            goToPage(page - 1);
+          }
+        );
       }
 
       return;
@@ -93,11 +128,6 @@ async function loadManga(query = '', page = 1) {
 
     // Kalau data kurang dari limit,
     // kemungkinan ini halaman terakhir
-    if (nextBtn) {
-      nextBtn.disabled =
-        mangaList.length < currentLimit;
-    }
-
 
     // =========================
     // TITLE
@@ -269,6 +299,123 @@ function goToPage(page) {
     `/doujinPage/html/allManga.html?${params.toString()}`;
 }
 
+// =========================
+// RENDER PAGINATION
+// =========================
+
+function renderPagination({
+  page,
+  hasPrevious,
+  hasNext
+}) {
+  const pageNumbers =
+    document.getElementById('pageNumbers');
+
+  const prevBtn =
+    document.getElementById('prevBtn');
+
+  const nextBtn =
+    document.getElementById('nextBtn');
+
+  if (prevBtn) {
+    prevBtn.disabled = !hasPrevious;
+  }
+
+  if (nextBtn) {
+    nextBtn.disabled = !hasNext;
+  }
+
+  if (!pageNumbers) return;
+
+  pageNumbers.innerHTML = '';
+
+  const pages = new Set();
+
+  // Halaman pertama selalu tersedia
+  pages.add(1);
+
+  // Beberapa halaman sebelum current page
+  for (
+    let number = Math.max(1, page - 2);
+    number <= page;
+    number++
+  ) {
+    pages.add(number);
+  }
+
+  // Tampilkan satu halaman berikutnya
+  // hanya jika data menunjukkan masih ada next page
+  if (hasNext) {
+    pages.add(page + 1);
+  }
+
+  const sortedPages =
+    [...pages].sort((a, b) => a - b);
+
+  let previousNumber = null;
+
+  sortedPages.forEach(number => {
+
+    if (
+      previousNumber !== null &&
+      number - previousNumber > 1
+    ) {
+      const ellipsis =
+        document.createElement('span');
+
+      ellipsis.className =
+        'page-ellipsis';
+
+      ellipsis.textContent =
+        '...';
+
+      pageNumbers.appendChild(
+        ellipsis
+      );
+    }
+
+    const button =
+      document.createElement('button');
+
+    button.type =
+      'button';
+
+    button.className =
+      'page-number';
+
+    button.textContent =
+      String(number);
+
+    if (number === page) {
+
+      button.classList.add(
+        'active'
+      );
+
+      button.setAttribute(
+        'aria-current',
+        'page'
+      );
+
+    } else {
+
+      button.addEventListener(
+        'click',
+        () => {
+          goToPage(number);
+        }
+      );
+
+    }
+
+    pageNumbers.appendChild(
+      button
+    );
+
+    previousNumber =
+      number;
+  });
+}
 
 // =========================
 // DOM READY
@@ -290,9 +437,6 @@ document.addEventListener(
     const nextBtn =
       document.getElementById('nextBtn');
 
-    const pageIndicator =
-      document.getElementById('pageIndicator');
-
     const backToTopBtn =
       document.getElementById('backToTop');
 
@@ -308,17 +452,6 @@ document.addEventListener(
       searchInput.value =
         currentQuery;
     }
-
-
-    // =========================
-    // PAGE INDICATOR
-    // =========================
-
-    if (pageIndicator) {
-      pageIndicator.textContent =
-        `PAGE ${currentPage}`;
-    }
-
 
     // =========================
     // PREVIOUS

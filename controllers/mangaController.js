@@ -1,40 +1,55 @@
 import { 
   scrapeMangaList, 
   scrapeMangaDetail, 
-  scrapeChapterImages,
-  searchManga
+  scrapeChapterImages
 } from '../lib/scraper.js';
 
 export const getMangaList = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const query = req.query.query || '';
+    const page = Math.max(
+      parseInt(req.query.page, 10) || 1,
+      1
+    );
 
-    const data = query
-      ? await searchManga(query).catch(async () => scrapeMangaList({ page, limit }))
-      : await scrapeMangaList({ page, limit });
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 10, 1),
+      100
+    );
 
-    const normalizedQuery = query.trim().toLowerCase();
-    const filteredData = normalizedQuery
-      ? data.filter((item) => {
-          const haystack = [
-            item?.title,
-            item?.slug,
-            ...(Array.isArray(item?.chapters)
-              ? item.chapters.flatMap((ch) => [ch?.title, ch?.chapter?.toString()])
-              : []),
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
+    const query =
+      typeof req.query.query === 'string'
+        ? req.query.query.trim()
+        : '';
 
-          return haystack.includes(normalizedQuery);
-        })
-      : data;
-    return res.json({ success: true, data: filteredData });
+    const data = await scrapeMangaList({
+      page,
+      limit,
+      query
+    });
+
+    return res.json({
+      success: true,
+
+      data,
+
+      pagination: {
+        page,
+        limit,
+        hasPrevious: page > 1,
+
+        // Selama upstream belum memberikan total count,
+        // jumlah item digunakan sebagai indikator sementara.
+        hasNext: data.length === limit
+      }
+    });
+
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+
   }
 };
 
