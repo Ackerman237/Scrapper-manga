@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmark — Doujin Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="/doujinPage/css/base.css">
+  <!-- Sesuaikan path CSS index/all jika menggunakan style grid manga yang sama -->
+  <link rel="stylesheet" href="/doujinPage/css/index.css"> 
+</head>
+
+<body>
+  <!-- HEADER / NAVBAR -->
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <a href="/"><h1>Doujin Library</h1></a>
+      </div>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="/doujinPage/html/index.html">HOME</a>
+        <a href="/doujinPage/html/all.html">ALL</a>
+        <a href="/doujinPage/html/categories.html">CATEGORIES</a>
+        <a href="/doujinPage/html/bookmark.html" class="active">BOOKMARK</a>
+        <a href="/doujinPage/html/account.html">ACCOUNT</a>
+      </nav>
+
+      <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Buka menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <h2 style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent); padding-left: 10px;">Manga Disimpan (Bookmark)</h2>
+    
+    <!-- State Kosong -->
+    <p id="emptyBookmark" style="display: none; text-align: center; color: var(--muted); padding: 3rem 0;">Belum ada manga yang dibookmark.</p>
+
+    <!-- Grid Bookmark -->
+    <div id="bookmarkGrid" class="manga-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;">
+      <!-- Konten dirender oleh bookmark.js -->
+    </div>
+  </main>
+
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+
+  <script src="/doujinPage/js/bookmark.js" defer></script>
+</body>
+</html>

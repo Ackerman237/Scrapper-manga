@@ -37,6 +37,11 @@
 })();
 
 const REQUEST_TIMEOUT_MS = 12000;
+let currentChapters = []; // Menyimpan array chapter asli dari API
+let chapterOrder = 'desc'; // State sort default: 'desc' (terbaru di atas)
+let chapterSearchQuery = ''; // State query pencarian chapter
+let currentManga = null; // Variabel global untuk menyimpan data detail manga aktif
+let globalTitleText = 'Tanpa Judul'; // Menyimpan judul global untuk fallback chapter
 
 async function fetchJsonWithTimeout(url) {
   const controller = new AbortController();
@@ -62,6 +67,88 @@ async function fetchMangaDetail(slug) {
   }
 
   return result.data;
+}
+
+// --- FUNGSI BOOKMARK (LocalStorage) ---
+function getBookmarks() {
+  return JSON.parse(
+    localStorage.getItem("bookmarks")
+  ) || {};
+}
+
+function toggleBookmark(manga) {
+  const bookmarks = getBookmarks();
+
+  if (bookmarks[manga.slug]) {
+    delete bookmarks[manga.slug];
+    localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+    return false;
+  } else {
+    bookmarks[manga.slug] = {
+      title: manga.title,
+      slug: manga.slug,
+      thumb: manga.thumb,
+      rating: manga.rating,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+    return true;
+  }
+}
+
+// --- FUNGSI RENDER CHAPTER (Support Filter & Sort) ---
+function renderChapterList() {
+  const list = el("chapterList");
+  const countEl = el("chapterCount");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  // 1. Filter berdasarkan input pencarian chapter
+  let filtered = currentChapters.filter(ch => {
+    const chNum = String(ch.number || ch.chapter || '');
+    const chTitle = String(ch.title || '').toLowerCase();
+    const query = chapterSearchQuery.toLowerCase();
+    return chNum.includes(query) || chTitle.includes(query);
+  });
+
+  // 2. Sort berdasarkan state (asc / desc)
+  filtered.sort((a, b) => {
+    const an = Number(a.number || a.chapter || 0);
+    const bn = Number(b.number || b.chapter || 0);
+    if (Number.isFinite(an) && Number.isFinite(bn) && an !== bn) {
+      return chapterOrder === 'asc' ? an - bn : bn - an;
+    }
+    return 0;
+  });
+
+  if (countEl) countEl.textContent = filtered.length;
+
+  if (filtered.length > 0) {
+    filtered.forEach((ch, idx) => {
+      const chId = ch.id || ch.chapter_id || ch.number || ch.chapter;
+      const chNum = ch.number || ch.chapter || (idx + 1);
+      const chTitle = ch.title || `${globalTitleText} Chapter ${chNum}`;
+      const chDate = ch.date || ch.releaseTime || "-";
+      const chViews = ch.views ? Number(ch.views).toLocaleString("id-ID") : "-";
+
+      const row = document.createElement("a");
+      row.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}`;
+      row.className = "chapter-row" + (idx === 0 && chapterOrder === 'desc' ? " is-latest" : "");
+      row.innerHTML = `
+        <div class="chapter-number">${chNum}</div>
+        <div class="chapter-row-body">
+          <h4>${chTitle}</h4>
+          <div class="chapter-row-meta">
+            <span class="meta-item">🕒 ${chDate}</span>
+            <span class="meta-item">👁 ${chViews}</span>
+          </div>
+        </div>`;
+      list.appendChild(row);
+    });
+  } else {
+    list.innerHTML = '<p class="error">Chapter tidak ditemukan.</p>';
+  }
 }
 
 function starString(rating) {
@@ -91,9 +178,28 @@ async function renderDetail() {
   try {
     const data = await fetchMangaDetail(slug);
 
-    // Fallback properti gambar & data
+    // Normalisasi data objek untuk disimpan ke variabel global
     const coverUrl = data.cover || data.thumb || data.coverUrl || "https://placehold.co/420x560?text=No+Cover";
     const titleText = data.title || "Tanpa Judul";
+    globalTitleText = titleText;
+    const mangaSlug = data.slug || slug;
+    const numRating = parseFloat(data.rating) || 0;
+
+    currentManga = {
+      title: titleText,
+      slug: mangaSlug,
+      thumb: coverUrl,
+      rating: numRating
+    };
+
+    // Sinkronisasi status tombol bookmark saat data berhasil dimuat
+    const bookmarkBtn = el("bookmarkBtn");
+    if (bookmarkBtn) {
+      const bookmarks = getBookmarks();
+      const isBookmarked = Boolean(bookmarks[mangaSlug]);
+      bookmarkBtn.textContent = isBookmarked ? "✅ BOOKMARKED" : "🔖 BOOKMARK";
+    }
+
     const altTitlesArr = Array.isArray(data.altTitles)
       ? data.altTitles
       : typeof data.altTitles === 'string'
@@ -109,8 +215,13 @@ async function renderDetail() {
     const statusText = data.status || "Ongoing";
     const typeText = data.type || "Manga";
     const typeFlagText = data.typeFlag || "??";
-    const chaptersArr = Array.isArray(data.chapters) ? data.chapters : [];
-    const chaptersAsc = [...chaptersArr].sort((a, b) => {
+    
+    // Set data chapter ke state global
+    currentChapters = Array.isArray(data.chapters) ? data.chapters : [];
+    chapterOrder = 'desc';
+    chapterSearchQuery = '';
+
+    const chaptersAsc = [...currentChapters].sort((a, b) => {
       const an = Number(a.number || a.chapter || 0);
       const bn = Number(b.number || b.chapter || 0);
       if (Number.isFinite(an) && Number.isFinite(bn) && an !== bn) return an - bn;
@@ -159,7 +270,6 @@ async function renderDetail() {
     }
 
     // ---- Rating Box ----
-    const numRating = parseFloat(data.rating) || 0;
     if (el("ratingScore")) el("ratingScore").textContent = numRating ? numRating.toFixed(1) : "-";
     if (el("ratingStars")) el("ratingStars").textContent = starString(numRating);
     if (el("viewsValue")) {
@@ -168,47 +278,17 @@ async function renderDetail() {
 
     // ---- Synopsis ----
     if (el("synopsisText")) {
-  el("synopsisText").textContent =
-    cleanSynopsis(
-      data.synopsis ||
-      data.summary ||
-      data.description ||
-      ''
-    );
-}
-
-    // ---- Daftar Chapter ----
-    if (el("chapterCount")) el("chapterCount").textContent = chaptersArr.length;
-    const list = el("chapterList");
-    if (list) {
-      list.innerHTML = "";
-      if (chaptersArr.length > 0) {
-        chaptersArr.forEach((ch, idx) => {
-          const chId = ch.id || ch.chapter_id || ch.number || ch.chapter;
-          const chNum = ch.number || ch.chapter || (idx + 1);
-          const chTitle = ch.title || `${titleText} Chapter ${chNum}`;
-          const chDate = ch.date || ch.releaseTime || "-";
-          const chViews = ch.views ? Number(ch.views).toLocaleString("id-ID") : "-";
-
-          const row = document.createElement("a");
-          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/html/reader.html
-          row.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}`;
-          row.className = "chapter-row" + (idx === 0 ? " is-latest" : "");
-          row.innerHTML = `
-            <div class="chapter-number">${chNum}</div>
-            <div class="chapter-row-body">
-              <h4>${chTitle}</h4>
-              <div class="chapter-row-meta">
-                <span class="meta-item">🕒 ${chDate}</span>
-                <span class="meta-item">👁 ${chViews}</span>
-              </div>
-            </div>`;
-          list.appendChild(row);
-        });
-      } else {
-        list.innerHTML = '<p class="error">Tidak ada chapter tersedia.</p>';
-      }
+      el("synopsisText").textContent =
+        cleanSynopsis(
+          data.synopsis ||
+          data.summary ||
+          data.description ||
+          ''
+        );
     }
+
+    // ---- Daftar Chapter (Dipanggil via renderChapterList) ----
+    renderChapterList();
 
     // ---- Tombol Read Now -> Navigasi ke Chapter Pertama / Terbaru ----
     const readNowBtn = el("readNowBtn");
@@ -217,7 +297,6 @@ async function renderDetail() {
         const firstCh = chaptersAsc[0];
         const firstChId = firstCh.id || firstCh.chapter_id || firstCh.number || firstCh.chapter;
         readNowBtn.onclick = () => {
-          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/html/reader.html
           window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(firstChId)}`;
         };
       } else {
@@ -245,6 +324,35 @@ async function renderDetail() {
 // Handler event UI
 document.addEventListener("DOMContentLoaded", () => {
   renderDetail();
+
+  // Event Listener Tombol Bookmark
+  const bookmarkBtn = el("bookmarkBtn");
+  if (bookmarkBtn) {
+    bookmarkBtn.addEventListener("click", () => {
+      if (!currentManga) return;
+      const active = toggleBookmark(currentManga);
+      bookmarkBtn.textContent = active ? "✅ BOOKMARKED" : "🔖 BOOKMARK";
+    });
+  }
+
+  // Event Search Chapter (Live filter)
+  const chapterSearchInput = el("chapterSearch");
+  if (chapterSearchInput) {
+    chapterSearchInput.addEventListener("input", (e) => {
+      chapterSearchQuery = e.target.value.trim();
+      renderChapterList();
+    });
+  }
+
+  // Event Sort Button (Toggle ASC / DESC)
+  const chapterSortBtn = el("chapterSortBtn");
+  if (chapterSortBtn) {
+    chapterSortBtn.addEventListener("click", () => {
+      chapterOrder = chapterOrder === "desc" ? "asc" : "desc";
+      chapterSortBtn.textContent = chapterOrder === "asc" ? "⬆" : "⇅";
+      renderChapterList();
+    });
+  }
 
   el("altTitlesToggle")?.addEventListener("click", () => {
     const target = el("mAltTitlesShort");
@@ -288,7 +396,6 @@ function cleanSynopsis(raw) {
     'text/html'
   );
 
-  // Buang elemen yang tidak relevan / berbahaya
   doc.querySelectorAll(
     'script, style, img'
   ).forEach(el => el.remove());
@@ -308,7 +415,6 @@ function cleanSynopsis(raw) {
 
     if (!text) continue;
 
-    // Hentikan ketika masuk bagian download
     if (
       /download\s*batch/i.test(text)
     ) {
@@ -318,7 +424,6 @@ function cleanSynopsis(raw) {
     parts.push(text);
   }
 
-  // Kalau HTML tidak menggunakan <p>
   if (parts.length === 0) {
     const text =
       doc.body.textContent
