@@ -1,0 +1,5 @@
+chore(web): apply website updates from website-update.zip
+
+Apply changes provided in website-update.zip uploaded by user. Restores/moves website assets and HTML as provided.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
