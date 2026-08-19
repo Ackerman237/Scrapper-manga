@@ -52,19 +52,19 @@ A primary focus of this project, featuring:
 
 ## Roadmap
 
-### Phase 1: Reader Improvement
+**Phase 1: Reader Improvement**
 - [ ] Improve retry image UX and loading states.
 - [ ] Implement image preloading for next pages.
 - [ ] Reading progress indicator and position saving.
 
-### Phase 2: Personal Library Enhancement
+**Phase 2: Personal Library Enhancement**
 - [ ] Continue Reading feature.
 - [ ] Reading history and last-opened chapter tracking.
 
-### Phase 3: Recommendation System
+**Phase 3: Recommendation System**
 - [ ] Personalized recommendations based on bookmarks and history.
 
-### Phase 4: Account System
+**Phase 4: Account System**
 - [ ] User authentication and cloud synchronization.
 
 ---
@@ -79,26 +79,28 @@ A primary focus of this project, featuring:
 ### Installation
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/syukronAbdullah/Scrapper-manga.git
-   cd Scrapper-manga
-   ```
+```bash
+git clone https://github.com/syukronAbdullah/Scrapper-manga.git
+cd Scrapper-manga
+```
 
 2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. Setup environment variables:
-   ```bash
-   cp .env.example .env
-   # Update .env with your specific configurations
-   ```
+```bash
+cp .env.example .env
+# Update .env with your specific configurations
+```
+
+> **Note:** Konfigurasi `.env` dilakukan secara mandiri, lihat caranya di [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) bagian `.env.example`, atau lihat caranya di README.md repo asli.
 
 4. Run the server:
-   ```bash
-   npm start
-   ```
+```bash
+npm start
+```
 
 The application will typically be available at `http://localhost:3000`.
 
@@ -118,6 +120,18 @@ This is a personal learning project. Features and architecture are subject to ch
 
 ---
 
+## Credits
+
+This project is heavily adapted and inspired by the following repository:
+
+- [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) — Used as the primary foundation for the scraping logic, API structure, and overall project architecture.
+
+> **Note:** Konfigurasi `.env` dilakukan secara mandiri, lihat caranya di [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) bagian `.env.example`, atau lihat caranya di README.md repo asli.
+
+---
+
 ## License
 
 License will be determined at a later stage of development.
+
+Portions of this project are adapted from [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper). Please refer to the original repository for its license terms and source code usage guidelines.
