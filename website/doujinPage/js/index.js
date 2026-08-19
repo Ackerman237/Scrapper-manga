@@ -1,4 +1,3 @@
-
 // Doujin Library — shared nav toggle (hamburger menu mobile)
 // Load di SEMUA halaman, taruh sebelum script khusus halaman (detail.js, reader.js, dst)
 
@@ -33,7 +32,6 @@
   });
 })();
 
-let currentPage = 1;
 let currentLimit = 10;
 let currentQuery = '';
 const REQUEST_TIMEOUT_MS = 12000;
@@ -53,15 +51,13 @@ async function fetchJsonWithTimeout(url) {
   }
 }
 
-async function loadManga(query = '', page = 1, isAppend = false) {
+async function loadManga(query = '', page = 1) {
   const grid = document.getElementById('mangaGrid');
   const sectionTitle = document.getElementById('sectionTitle');
 
   if (!grid) return;
 
-  if (!isAppend) {
-    grid.innerHTML = '<p class="loading">Memuat manga...</p>';
-  }
+  grid.innerHTML = '<p class="loading">Memuat manga...</p>';
 
   try {
     let endpoint = `/api/manga?page=${page}&limit=${currentLimit}`;
@@ -72,9 +68,9 @@ async function loadManga(query = '', page = 1, isAppend = false) {
     const result = await fetchJsonWithTimeout(endpoint);
     const mangaList = Array.isArray(result) ? result : (result.data || result.results || []);
 
-    if (!isAppend) grid.innerHTML = '';
+    grid.innerHTML = '';
 
-    if (mangaList.length === 0 && !isAppend) {
+    if (mangaList.length === 0) {
       grid.innerHTML = '<p class="error">Manga tidak ditemukan.</p>';
       return;
     }
@@ -94,7 +90,6 @@ async function loadManga(query = '', page = 1, isAppend = false) {
         manga.chapters.slice(0, 2).forEach(ch => {
           const chId = ch.id || ch.chapter_id || '';
           const isNew = ch.isNew ? '<span class="badge-new">NEW</span>' : '';
-          // PERBAIKAN: Mengarahkan path eksplisit ke /doujinPage/html/reader.html
           chaptersHTML += `
             <a href="/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}" class="chapter-btn" onclick="event.stopPropagation();">
               <span>${ch.title || 'Chapter ' + ch.chapter} ${isNew}</span>
@@ -115,7 +110,6 @@ async function loadManga(query = '', page = 1, isAppend = false) {
         </div>
       `;
 
-      // PERBAIKAN: Mengarahkan path eksplisit ke /doujinPage/detail.html
       card.querySelectorAll('[data-slug]').forEach(el => {
         el.addEventListener('click', () => {
           window.location.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
@@ -127,15 +121,13 @@ async function loadManga(query = '', page = 1, isAppend = false) {
 
   } catch (error) {
     console.error('Fetch Error:', error);
-    if (!isAppend) {
-      const message =
-        error?.name === 'AbortError'
-          ? 'Request terlalu lama. Coba lagi sebentar.'
-          : error?.message === 'HTTP 500'
-            ? 'Backend sedang gagal memuat data.'
-            : 'Gagal mengambil data manga.';
-      grid.innerHTML = `<p class="error">${message}</p>`;
-    }
+    const message =
+      error?.name === 'AbortError'
+        ? 'Request terlalu lama. Coba lagi sebentar.'
+        : error?.message === 'HTTP 500'
+          ? 'Backend sedang gagal memuat data.'
+          : 'Gagal mengambil data manga.';
+    grid.innerHTML = `<p class="error">${message}</p>`;
   }
 }
 
@@ -143,19 +135,12 @@ async function loadManga(query = '', page = 1, isAppend = false) {
 document.addEventListener('DOMContentLoaded', () => {
   const searchForm = document.getElementById('searchForm');
   const searchInput = document.getElementById('searchInput');
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
   const backToTopBtn = document.getElementById('backToTop');
 
   searchForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     currentQuery = searchInput.value.trim();
-    currentPage = 1;
-    loadManga(currentQuery, currentPage, false);
-  });
-
-  loadMoreBtn?.addEventListener('click', () => {
-    currentPage++;
-    loadManga(currentQuery, currentPage, true);
+    loadManga(currentQuery, 1);
   });
 
   if (backToTopBtn) {
