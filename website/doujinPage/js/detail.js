@@ -132,7 +132,15 @@ async function renderDetail() {
     }
 
     // ---- Synopsis ----
-    if (el("synopsisText")) el("synopsisText").textContent = data.synopsis || data.summary || data.description || "Tidak ada sinopsis.";
+    if (el("synopsisText")) {
+  el("synopsisText").textContent =
+    cleanSynopsis(
+      data.synopsis ||
+      data.summary ||
+      data.description ||
+      ''
+    );
+}
 
     // ---- Daftar Chapter ----
     if (el("chapterCount")) el("chapterCount").textContent = chaptersArr.length;
@@ -233,3 +241,64 @@ document.addEventListener("DOMContentLoaded", () => {
     backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   }
 });
+
+function cleanSynopsis(raw) {
+  if (!raw || typeof raw !== 'string') {
+    return 'Tidak ada sinopsis.';
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(
+    raw,
+    'text/html'
+  );
+
+  // Buang elemen yang tidak relevan / berbahaya
+  doc.querySelectorAll(
+    'script, style, img'
+  ).forEach(el => el.remove());
+
+  const paragraphs =
+    Array.from(
+      doc.querySelectorAll('p')
+    );
+
+  const parts = [];
+
+  for (const paragraph of paragraphs) {
+    const text =
+      paragraph.textContent
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (!text) continue;
+
+    // Hentikan ketika masuk bagian download
+    if (
+      /download\s*batch/i.test(text)
+    ) {
+      break;
+    }
+
+    parts.push(text);
+  }
+
+  // Kalau HTML tidak menggunakan <p>
+  if (parts.length === 0) {
+    const text =
+      doc.body.textContent
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const cleaned =
+      text.split(
+        /download\s*batch/i
+      )[0]
+      .trim();
+
+    return cleaned ||
+      'Tidak ada sinopsis.';
+  }
+
+  return parts.join('\n\n');
+}

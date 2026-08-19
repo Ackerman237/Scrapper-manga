@@ -68,15 +68,29 @@ export const getMangaList = async (req, res) => {
 
 export const getMangaDetail = async (req, res) => {
   try {
-    const { slug } = req.params;
-    const data = await scrapeMangaDetail(slug);
+    const { slug } = req.query;
+
+    if (!slug) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter slug dibutuhkan'
+      });
+    }
+
+    const data =
+      await scrapeMangaDetail(slug);
 
     return res.json({
       success: true,
       data
     });
+
   } catch (err) {
-    console.error('getMangaDetail error:', err);
+
+    console.error(
+      'getMangaDetail error:',
+      err
+    );
 
     return res.status(500).json({
       success: false,
@@ -87,15 +101,29 @@ export const getMangaDetail = async (req, res) => {
 
 export const getChapterImages = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await scrapeChapterImages(id);
+    const { id } = req.query;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter ID Chapter dibutuhkan'
+      });
+    }
+
+    const data =
+      await scrapeChapterImages(id);
 
     return res.json({
       success: true,
       data
     });
+
   } catch (err) {
-    console.error('getChapterImages error:', err);
+
+    console.error(
+      'getChapterImages error:',
+      err
+    );
 
     return res.status(500).json({
       success: false,

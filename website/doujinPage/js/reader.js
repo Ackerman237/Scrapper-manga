@@ -522,7 +522,31 @@ async function loadChapter() {
     }
 
     const mangaTitle = chapterData.mangaTitle || chapterData.manga_title || mangaDetail?.title || 'Manga';
-    const chapters = Array.isArray(mangaDetail?.chapters) ? mangaDetail.chapters : [];
+    const chaptersRaw =
+  Array.isArray(mangaDetail?.chapters)
+    ? mangaDetail.chapters
+    : [];
+
+const chapters =
+  [...chaptersRaw].sort(
+    (a, b) => {
+      const aNum =
+        Number(
+          a.number ??
+          a.chapter ??
+          0
+        );
+
+      const bNum =
+        Number(
+          b.number ??
+          b.chapter ??
+          0
+        );
+
+      return aNum - bNum;
+    }
+  );
     const currentIndex = getCurrentChapterIndex(chapters, chapterId);
     const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     const nextChapter = currentIndex >= 0 && currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
@@ -669,12 +693,6 @@ async function loadChapter() {
           playBtn.setAttribute('aria-label', 'Mulai auto-scroll');
         }
       }
-    });
-
-    observeChapterEnd(endSentinel, () => {
-      if (!nextChapter) return;
-      const stillOnPage = Math.ceil(window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 40;
-      if (stillOnPage) goNext();
     });
   } catch (err) {
     console.error(err);
