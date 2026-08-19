@@ -598,11 +598,39 @@ const chapters =
     if (imageUrls.length > 0) {
       imageUrls.forEach((imgUrl, index) => {
         const img = document.createElement('img');
+        const imageUrl =
+          `/api/image-proxy?url=${encodeURIComponent(imgUrl)}&chapterId=${encodeURIComponent(chapterId)}`;
         img.alt = `Halaman ${index + 1}`;
         img.loading = 'lazy';
         img.decoding = 'async';
-        img.dataset.src = `/api/image-proxy?url=${encodeURIComponent(imgUrl)}&chapterId=${encodeURIComponent(chapterId)}`;
+        img.dataset.src = imageUrl;
         img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+        img.onerror = () => {
+          const errorBox = document.createElement('div');
+          errorBox.className = 'reader-image-error';
+          errorBox.innerHTML = `
+            <svg class="reader-image-error__icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="13"/>
+              <circle cx="12" cy="16.5" r="0.5" fill="currentColor"/>
+            </svg>
+            <p class="reader-image-error__text">Gambar halaman ${index + 1} gagal dimuat</p>
+            <button type="button" class="reader-image-error__retry">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+              </svg>
+              Coba Lagi
+            </button>
+          `;
+          const retryBtn =
+            errorBox.querySelector('button');
+          retryBtn.addEventListener('click', () => {
+            errorBox.replaceWith(img);
+            img.src = imageUrl;
+          });
+          img.replaceWith(errorBox);
+        };
         imageList.appendChild(img);
       });
 
