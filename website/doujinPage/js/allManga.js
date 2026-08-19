@@ -91,40 +91,57 @@ async function loadManga(query = '', page = 1) {
 
     if (mangaList.length === 0) {
 
-      grid.innerHTML = `
-        <div class="empty-state">
-          <p>Manga tidak ditemukan.</p>
+  const emptyMessage = query
+    ? `Tidak ada manga yang ditemukan untuk "${query}".`
+    : 'Manga tidak ditemukan.';
 
-          ${
-            page > 1
-              ? '<button id="backPreviousPage" class="retry-btn">← KEMBALI KE HALAMAN SEBELUMNYA</button>'
-              : ''
-          }
-        </div>
-      `;
+  grid.innerHTML = `
+    <div class="empty-state">
+      <p>${emptyMessage}</p>
 
-      renderPagination({
-        page,
-        hasPrevious: page > 1,
-        hasNext: false
-      });
-
-      const backPreviousPage =
-        document.getElementById(
-          'backPreviousPage'
-        );
-
-      if (backPreviousPage) {
-        backPreviousPage.addEventListener(
-          'click',
-          () => {
-            goToPage(page - 1);
-          }
-        );
+      ${
+        query
+          ? '<button id="clearSearchBtn" class="retry-btn">LIHAT SEMUA MANGA</button>'
+          : page > 1
+            ? '<button id="backPreviousPage" class="retry-btn">← KEMBALI KE HALAMAN SEBELUMNYA</button>'
+            : ''
       }
+    </div>
+  `;
 
-      return;
-    }
+  renderPagination({
+    page,
+    hasPrevious: page > 1,
+    hasNext: false
+  });
+
+  const clearSearchBtn =
+    document.getElementById('clearSearchBtn');
+
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener(
+      'click',
+      () => {
+        window.location.href =
+          '/doujinPage/html/allManga.html?page=1';
+      }
+    );
+  }
+
+  const backPreviousPage =
+    document.getElementById('backPreviousPage');
+
+  if (backPreviousPage) {
+    backPreviousPage.addEventListener(
+      'click',
+      () => {
+        goToPage(page - 1);
+      }
+    );
+  }
+
+  return;
+}
 
     // Kalau data kurang dari limit,
     // kemungkinan ini halaman terakhir
@@ -134,10 +151,10 @@ async function loadManga(query = '', page = 1) {
     // =========================
 
     if (sectionTitle) {
-      sectionTitle.textContent = query
-        ? `Hasil Pencarian: "${query}"`
-        : `Manga Terbaru — Page ${page}`;
-    }
+  sectionTitle.textContent = query
+    ? `Search Results — "${query}"`
+    : `All Series — Page ${page}`;
+}
 
 
     // =========================
@@ -482,18 +499,21 @@ document.addEventListener(
     // =========================
 
     if (nextBtn) {
+  nextBtn.addEventListener(
+    'click',
+    () => {
 
-      nextBtn.addEventListener(
-        'click',
-        () => {
+      if (nextBtn.disabled) {
+        return;
+      }
 
-          goToPage(
-            currentPage + 1
-          );
-
-        }
+      goToPage(
+        currentPage + 1
       );
+
     }
+  );
+}
 
 
     // =========================
