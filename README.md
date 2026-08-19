@@ -37,15 +37,22 @@ A primary focus of this project, featuring:
 
 ```text
 /
-├── backend/            # API logic and scraping modules
-├── website/            # Frontend assets
-│   └── doujinPage/
-│       ├── html/
+├── .agents/             # Agent/automation configs
+├── controllers/         # Request handlers and business logic
+├── lib/                 # Shared utilities and helper modules
+├── routes/              # API and page route definitions
+├── website/             # Frontend assets
+│   ├── doujinPage/
+│   │   ├── html/
+│   │   ├── css/
+│   │   └── js/
+│   └── nekoPage/        # Neko Videos (paused feature)
 │       ├── css/
-│       └── js/
-├── package.json        # Dependencies
-├── server.js           # Main application server
-└── .env.example        # Environment configuration
+│       └── html/
+├── node_modules/        # Installed dependencies (generated, not tracked)
+├── package.json         # Dependencies
+├── server.js            # Main application server
+└── .env.example         # Environment configuration
 ```
 
 ---
@@ -80,7 +87,7 @@ A primary focus of this project, featuring:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Ackerman237/Scrapper-manga.git
+git clone https://github.com/syukronAbdullah/Scrapper-manga.git
 cd Scrapper-manga
 ```
 
