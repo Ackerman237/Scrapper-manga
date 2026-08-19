@@ -96,6 +96,31 @@ function toggleBookmark(manga) {
   }
 }
 
+// --- FUNGSI FAVORITE (LocalStorage) ---
+function getFavorites() {
+  return JSON.parse(localStorage.getItem("favorites")) || {};
+}
+
+function toggleFavorite(manga) {
+  const favorites = getFavorites();
+
+  if (favorites[manga.slug]) {
+    delete favorites[manga.slug];
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    return false;
+  } else {
+    favorites[manga.slug] = {
+      title: manga.title,
+      slug: manga.slug,
+      thumb: manga.thumb,
+      rating: manga.rating,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    return true;
+  }
+}
+
 // --- FUNGSI HISTORY (LocalStorage) ---
 function getReadingHistory(){
  return JSON.parse(
@@ -213,6 +238,14 @@ async function renderDetail() {
       const bookmarks = getBookmarks();
       const isBookmarked = Boolean(bookmarks[mangaSlug]);
       bookmarkBtn.textContent = isBookmarked ? "✅ BOOKMARKED" : "🔖 BOOKMARK";
+    }
+
+    // Sinkronisasi status tombol favorite saat data berhasil dimuat
+    const favoriteBtn = el("favoriteBtn");
+    if (favoriteBtn) {
+      const favorites = getFavorites();
+      const isFavorite = Boolean(favorites[mangaSlug]);
+      favoriteBtn.classList.toggle("active", isFavorite);
     }
 
     const altTitlesArr = Array.isArray(data.altTitles)
@@ -344,6 +377,40 @@ async function renderDetail() {
   }
 }
 
+// Contoh implementasi logika tombol Favorite di detail.js
+const favoriteBtn = document.getElementById('favoriteBtn');
+
+function checkFavoriteStatus(slug) {
+  const favorites = JSON.parse(localStorage.getItem("favorites")) || {};
+  if (favorites[slug]) {
+    favoriteBtn.classList.add('is-active');
+    favoriteBtn.innerHTML = '❤️ FAVORITED';
+  } else {
+    favoriteBtn.classList.remove('is-active');
+    favoriteBtn.innerHTML = '❤️ FAVORITE';
+  }
+}
+
+favoriteBtn.addEventListener('click', () => {
+  let favorites = JSON.parse(localStorage.getItem("favorites")) || {};
+  const slug = mangaData.slug; // Sesuaikan dengan variabel objek manga Anda
+
+  if (favorites[slug]) {
+    delete favorites[slug];
+  } else {
+    favorites[slug] = {
+      slug: mangaData.slug,
+      title: mangaData.title,
+      thumb: mangaData.thumb,
+      rating: mangaData.rating,
+      savedAt: new Date().toISOString()
+    };
+  }
+
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  checkFavoriteStatus(slug);
+});
+
 // Handler event UI
 document.addEventListener("DOMContentLoaded", () => {
   renderDetail();
@@ -355,6 +422,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!currentManga) return;
       const active = toggleBookmark(currentManga);
       bookmarkBtn.textContent = active ? "✅ BOOKMARKED" : "🔖 BOOKMARK";
+    });
+  }
+
+  // Event Listener Tombol Favorite
+  const favoriteBtn = el("favoriteBtn");
+  if (favoriteBtn) {
+    favoriteBtn.addEventListener("click", () => {
+      if (!currentManga) return;
+      const active = toggleFavorite(currentManga);
+      favoriteBtn.classList.toggle("active", active);
     });
   }
 

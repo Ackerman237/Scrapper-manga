@@ -171,6 +171,25 @@
   border-color: var(--ink);
 }
 
+.btn-favorite {
+    background: transparent;
+    border: 1px solid var(--border-soft);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-favorite:hover {
+    transform: translateY(-1px);
+}
+
+.btn-favorite.active {
+    color: #d94b4b;
+    border-color: #d94b4b;
+}
+
 .btn-notify {
   width: 46px;
   display: flex;
@@ -406,6 +425,62 @@
   gap: 4px;
   cursor: pointer;
   padding: 0;
+}
+
+/* =========================================================
+   Tombol Favorite di Halaman Detail
+   ========================================================= */
+
+.detail-secondary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.btn-favorite {
+  background: var(--card, #fff);
+  border: 1px solid var(--border-soft, #ddd);
+  color: var(--text, #333);
+  font-family: var(--font-display, inherit);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: var(--radius, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.04em;
+}
+
+.btn-favorite:hover {
+  border-color: var(--ink, #111);
+  background: var(--card-hover, #f8f9fa);
+  transform: translateY(-1px);
+}
+
+/* State ketika manga sudah masuk dalam daftar Favorite */
+.btn-favorite.is-active {
+  background: rgba(229, 62, 62, 0.1);
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.btn-favorite.is-active:hover {
+  background: rgba(229, 62, 62, 0.15);
+}
+
+/* Penyesuaian responsif untuk layar kecil */
+@media (max-width: 480px) {
+  .detail-secondary-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .btn-notify {
+    grid-column: span 2;
+  }
 }
 
 /* ---------- chapter list panel ---------- */
