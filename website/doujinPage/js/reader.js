@@ -31,45 +31,22 @@ function el(id) {
   return document.getElementById(id);
 }
 
-function chapterTitle(chapter, index, mangaTitle) {
-  const num = chapter.number || chapter.chapter || index + 1;
-  return chapter.title || `${mangaTitle} Chapter ${num}`;
+function getChapterId(chapter) {
+  return chapter?.id ?? chapter?.chapter_id ?? '';
 }
 
 function getCurrentChapterIndex(chapters, chapterId) {
-  return chapters.findIndex((ch) => String(ch.id || ch.chapter_id || '') === String(chapterId));
+  return chapters.findIndex((ch) => String(getChapterId(ch)) === String(chapterId));
 }
 
-function renderNavButton({ label, targetId, disabled = false }) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'reader-nav-btn';
-  button.textContent = label;
-  if (disabled) {
-    button.disabled = true;
-    button.classList.add('is-disabled');
-  } else {
-    button.addEventListener('click', () => {
-      window.location.href = `/reader.html?id=${encodeURIComponent(targetId)}`;
-    });
+function chapterLabel(chapterData, currentIndex) {
+  const num = chapterData?.number ?? chapterData?.chapter;
+  if (num !== undefined && num !== null && String(num).trim() !== '') {
+    return `Ch ${num}`;
   }
-  return button;
-}
-
-function renderIconButton({ label, className, onClick, disabled = false }) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = `reader-icon-btn ${className || ''}`.trim();
-  button.setAttribute('aria-label', label);
-  button.title = label;
-  button.textContent = label;
-  if (disabled) {
-    button.disabled = true;
-    button.classList.add('is-disabled');
-  } else if (onClick) {
-    button.addEventListener('click', onClick);
-  }
-  return button;
+  if (chapterData?.title) return chapterData.title;
+  if (currentIndex >= 0) return `Ch ${currentIndex + 1}`;
+  return 'Chapter';
 }
 
 function setupLazyImages(container) {
@@ -106,38 +83,418 @@ function observeChapterEnd(endSentinel, onReachEnd) {
   return observer;
 }
 
-function setupReaderChromeToggle(chrome) {
-  if (!chrome) return;
-  let hideTimer = null;
+/* ---------------------------------------------------------
+   SITE CHROME INTEGRATION (shared header + existing backToTop btn)
+   --------------------------------------------------------- */
 
-  const showChrome = () => {
-    chrome.classList.add('is-visible');
-    chrome.classList.remove('is-hidden');
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => {
-      if (window.scrollY > 12) {
-        chrome.classList.add('is-hidden');
-        chrome.classList.remove('is-visible');
-      }
-    }, 1200);
-  };
-
-  const hideChrome = () => {
-    if (window.scrollY <= 12) return;
-    chrome.classList.add('is-hidden');
-    chrome.classList.remove('is-visible');
-  };
-
-  window.addEventListener('scroll', hideChrome, { passive: true });
-  window.addEventListener('pointerdown', showChrome, { passive: true });
-  window.addEventListener('touchstart', showChrome, { passive: true });
-  showChrome();
+function syncSiteHeaderHeight() {
+  const header = document.querySelector('header');
+  if (!header) return;
+  document.documentElement.style.setProperty('--site-header-h', `${header.offsetHeight}px`);
 }
 
+function markReaderShell() {
+  document.querySelector('main.container')?.classList.add('reader-shell');
+}
+
+function setupBackToTop() {
+  const btn = el('backToTop');
+  if (!btn) return;
+  const sync = () => btn.classList.toggle('show', window.scrollY > 400);
+  window.addEventListener('scroll', sync, { passive: true });
+  btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  sync();
+}
+
+/* ---------------------------------------------------------
+   CHROME: top bar + bottom bar + side controls, tap-to-toggle
+   --------------------------------------------------------- */
+
+function makeIconButton({ label, text, className, disabled = false, onClick }) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = className;
+  button.setAttribute('aria-label', label);
+  button.title = label;
+  button.textContent = text;
+  if (disabled) {
+    button.disabled = true;
+    button.classList.add('is-disabled');
+  } else if (onClick) {
+    button.addEventListener('click', onClick);
+  }
+  return button;
+}
+
+function buildTopBar({ mangaTitle, chapterLabelText, mangaSlug }) {
+  const bar = document.createElement('header');
+  bar.className = 'reader-topbar';
+
+  const backBtn = makeIconButton({
+    label: 'Kembali',
+    text: '←',
+    className: 'reader-tb-btn',
+    onClick: () => {
+      if (mangaSlug) {
+        window.location.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
+      } else if (document.referrer) {
+        window.history.back();
+      } else {
+        window.location.href = '/doujinPage/html/';
+      }
+    },
+  });
+
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'reader-tb-title';
+
+  const seriesSpan = document.createElement('span');
+  seriesSpan.id = 'readerSeriesTitle';
+  seriesSpan.textContent = mangaTitle;
+
+  const arrowSpan = document.createElement('span');
+  arrowSpan.className = 'reader-tb-arrow';
+  arrowSpan.textContent = '›';
+
+  const chapterSpan = document.createElement('span');
+  chapterSpan.id = 'readerChapterLabel';
+  chapterSpan.className = 'reader-tb-chapter';
+  chapterSpan.textContent = chapterLabelText;
+
+  titleWrap.append(seriesSpan, arrowSpan, chapterSpan);
+
+  const homeBtn = document.createElement('a');
+  homeBtn.href = '/doujinPage/html/index.html';
+  homeBtn.className = 'reader-tb-btn';
+  homeBtn.setAttribute('aria-label', 'Beranda');
+  homeBtn.title = 'Beranda';
+  homeBtn.textContent = '⌂';
+
+  bar.append(backBtn, titleWrap, homeBtn);
+  return bar;
+}
+
+function buildBottomBar({ prevChapter, nextChapter, onPlayToggle, onSettings, onMenu }) {
+  const bar = document.createElement('nav');
+  bar.className = 'reader-bottombar';
+
+  const prevBtn = makeIconButton({
+    label: 'Chapter sebelumnya',
+    text: '‹',
+    className: 'reader-bb-btn',
+    disabled: !prevChapter,
+    onClick: prevChapter ? () => {
+      window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(getChapterId(prevChapter))}`;
+    } : null,
+  });
+
+  const settingsBtn = makeIconButton({
+    label: 'Pengaturan baca',
+    text: '⚙',
+    className: 'reader-bb-btn',
+    onClick: onSettings,
+  });
+
+  const playBtn = makeIconButton({
+    label: 'Mulai auto-scroll',
+    text: '▶',
+    className: 'reader-bb-btn is-play',
+    onClick: () => onPlayToggle(playBtn),
+  });
+
+  const menuBtn = makeIconButton({
+    label: 'Daftar chapter',
+    text: '☰',
+    className: 'reader-bb-btn',
+    onClick: onMenu,
+  });
+
+  const nextBtn = makeIconButton({
+    label: 'Chapter berikutnya',
+    text: '›',
+    className: 'reader-bb-btn',
+    disabled: !nextChapter,
+    onClick: nextChapter ? () => {
+      window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(getChapterId(nextChapter))}`;
+    } : null,
+  });
+
+  bar.append(prevBtn, settingsBtn, playBtn, menuBtn, nextBtn);
+  return bar;
+}
+
+function buildSideControls() {
+  const wrap = document.createElement('div');
+  wrap.className = 'reader-side-controls';
+
+  const upBtn = makeIconButton({
+    label: 'Scroll ke atas',
+    text: '▲',
+    className: 'reader-side-btn',
+    onClick: () => {
+      window.scrollBy({ top: -Math.round(window.innerHeight * 0.8), behavior: 'smooth' });
+    },
+  });
+
+  const downBtn = makeIconButton({
+    label: 'Scroll ke bawah',
+    text: '▼',
+    className: 'reader-side-btn',
+    onClick: () => {
+      window.scrollBy({ top: Math.round(window.innerHeight * 0.8), behavior: 'smooth' });
+    },
+  });
+
+  wrap.append(upBtn, downBtn);
+  return wrap;
+}
+
+function buildChapterDrawer({ chapters, currentChapterId }) {
+  const drawer = document.createElement('div');
+  drawer.className = 'reader-drawer';
+
+  const head = document.createElement('div');
+  head.className = 'reader-drawer-head';
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Daftar Chapter';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'reader-drawer-close';
+  closeBtn.setAttribute('aria-label', 'Tutup');
+  closeBtn.textContent = '✕';
+
+  head.append(heading, closeBtn);
+
+  const body = document.createElement('div');
+  body.className = 'reader-drawer-body';
+
+  if (chapters.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'loading';
+    empty.textContent = 'Daftar chapter tidak tersedia.';
+    body.appendChild(empty);
+  } else {
+    chapters.forEach((chapter, index) => {
+      const id = getChapterId(chapter);
+      const isCurrent = String(id) === String(currentChapterId);
+
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'reader-drawer-item';
+      if (isCurrent) item.classList.add('is-current');
+
+      const labelSpan = document.createElement('span');
+      const num = chapter.number ?? chapter.chapter;
+      labelSpan.textContent = (num !== undefined && num !== null && String(num).trim() !== '')
+        ? `Chapter ${num}`
+        : (chapter.title || `Chapter ${index + 1}`);
+      item.appendChild(labelSpan);
+
+      if (chapter.date) {
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'reader-drawer-date';
+        dateSpan.textContent = chapter.date;
+        item.appendChild(dateSpan);
+      }
+
+      if (isCurrent || !id) {
+        item.disabled = true;
+      } else {
+        item.addEventListener('click', () => {
+          window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(id)}`;
+        });
+      }
+
+      body.appendChild(item);
+    });
+  }
+
+  drawer.append(head, body);
+  return { drawer, closeBtn };
+}
+
+function buildSettingsPanel({ imageList }) {
+  const panel = document.createElement('div');
+  panel.className = 'reader-settings-panel';
+
+  const head = document.createElement('div');
+  head.className = 'reader-settings-head';
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Pengaturan Baca';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'reader-drawer-close';
+  closeBtn.setAttribute('aria-label', 'Tutup');
+  closeBtn.textContent = '✕';
+
+  head.append(heading, closeBtn);
+
+  const body = document.createElement('div');
+  body.className = 'reader-settings-body';
+
+  const widthRow = document.createElement('label');
+  widthRow.className = 'reader-setting-row';
+  const widthLabel = document.createElement('span');
+  widthLabel.textContent = 'Lebar Gambar';
+  const widthInput = document.createElement('input');
+  widthInput.type = 'range';
+  widthInput.min = '60';
+  widthInput.max = '100';
+  widthInput.value = '100';
+  widthInput.addEventListener('input', () => {
+    imageList.style.setProperty('--page-w', `${widthInput.value}%`);
+  });
+  widthRow.append(widthLabel, widthInput);
+
+  const speedRow = document.createElement('label');
+  speedRow.className = 'reader-setting-row';
+  const speedLabel = document.createElement('span');
+  speedLabel.textContent = 'Kecepatan Auto-Scroll';
+  const speedInput = document.createElement('input');
+  speedInput.type = 'range';
+  speedInput.min = '1';
+  speedInput.max = '10';
+  speedInput.value = '4';
+  speedInput.id = 'readerAutoScrollSpeed';
+  speedRow.append(speedLabel, speedInput);
+
+  body.append(widthRow, speedRow);
+  panel.append(head, body);
+  return { panel, closeBtn, speedInput };
+}
+
+function setupChromeToggle({ topbar, bottombar, sideControls, tapTarget }) {
+  let visible = true;
+
+  function applyVisibility() {
+    [topbar, bottombar, sideControls].forEach((node) => {
+      if (!node) return;
+      node.classList.toggle('is-hidden', !visible);
+    });
+  }
+
+  function toggle() {
+    visible = !visible;
+    applyVisibility();
+  }
+
+  function show() {
+    visible = true;
+    applyVisibility();
+  }
+
+  function hide() {
+    if (!visible) return;
+    visible = false;
+    applyVisibility();
+  }
+
+  if (tapTarget) {
+    tapTarget.addEventListener('click', (event) => {
+      if (event.target.closest('a, button')) return;
+      toggle();
+    });
+  }
+
+  return { toggle, show, hide };
+}
+
+function setupOverlayPanels({ drawer, drawerClose, settingsPanel, settingsClose, backdrop, menuBtn, settingsBtn, showChrome }) {
+  function closeAll() {
+    drawer.classList.remove('is-open');
+    settingsPanel.classList.remove('is-open');
+    backdrop.classList.remove('is-open');
+  }
+
+  function openDrawer() {
+    settingsPanel.classList.remove('is-open');
+    drawer.classList.add('is-open');
+    backdrop.classList.add('is-open');
+    showChrome();
+  }
+
+  function openSettings() {
+    drawer.classList.remove('is-open');
+    settingsPanel.classList.add('is-open');
+    backdrop.classList.add('is-open');
+    showChrome();
+  }
+
+  menuBtn.addEventListener('click', () => {
+    if (drawer.classList.contains('is-open')) {
+      closeAll();
+    } else {
+      openDrawer();
+    }
+  });
+
+  settingsBtn.addEventListener('click', () => {
+    if (settingsPanel.classList.contains('is-open')) {
+      closeAll();
+    } else {
+      openSettings();
+    }
+  });
+
+  drawerClose.addEventListener('click', closeAll);
+  settingsClose.addEventListener('click', closeAll);
+  backdrop.addEventListener('click', closeAll);
+}
+
+/* ---------------------------------------------------------
+   AUTO-SCROLL
+   --------------------------------------------------------- */
+
+function createAutoScroller(getSpeedValue) {
+  let active = false;
+  let rafId = null;
+
+  function step() {
+    if (!active) return;
+    const speed = 0.6 + Number(getSpeedValue() || 4) * 0.35;
+    window.scrollBy(0, speed);
+    const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+    if (atBottom) {
+      stop();
+      return;
+    }
+    rafId = requestAnimationFrame(step);
+  }
+
+  function start() {
+    active = true;
+    step();
+  }
+
+  function stop() {
+    active = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  function isActive() {
+    return active;
+  }
+
+  return { start, stop, isActive };
+}
+
+/* ---------------------------------------------------------
+   MAIN
+   --------------------------------------------------------- */
+
 async function loadChapter() {
-  const container = el('reader') || el('readerContainer');
-  const headerInfo = el('info') || el('readerHeader');
-  const backLink = el('backLink');
+  markReaderShell();
+  syncSiteHeaderHeight();
+  window.addEventListener('resize', syncSiteHeaderHeight);
+  setupBackToTop();
+
+  const container = el('reader');
+  const headerInfo = el('info');
   const urlParams = new URLSearchParams(window.location.search);
   const chapterId = urlParams.get('id');
 
@@ -145,14 +502,15 @@ async function loadChapter() {
 
   if (!chapterId) {
     container.className = 'error';
-    container.innerHTML = 'ID Chapter tidak ditemukan di URL.';
+    container.textContent = 'ID Chapter tidak ditemukan di URL.';
     return;
   }
+
+  container.innerHTML = '<p class="loading">Memuat chapter...</p>';
 
   try {
     const chapterData = await fetchChapter(chapterId);
     const mangaSlug = chapterData.mangaSlug || chapterData.manga_slug || '';
-    const mangaTitle = chapterData.mangaTitle || chapterData.manga_title || chapterData.title || 'Chapter';
 
     let mangaDetail = null;
     if (mangaSlug) {
@@ -163,77 +521,24 @@ async function loadChapter() {
       }
     }
 
+    const mangaTitle = chapterData.mangaTitle || chapterData.manga_title || mangaDetail?.title || 'Manga';
     const chapters = Array.isArray(mangaDetail?.chapters) ? mangaDetail.chapters : [];
     const currentIndex = getCurrentChapterIndex(chapters, chapterId);
     const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     const nextChapter = currentIndex >= 0 && currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
-    const displayTitle = chapterData.title || chapterTitle(chapterData, currentIndex >= 0 ? currentIndex : 0, mangaTitle);
-    const displayDate = chapterData.date || chapterData.releaseTime || '';
+    const chapterLabelText = chapterLabel(chapterData, currentIndex);
     const imageUrls = Array.isArray(chapterData.images) ? chapterData.images : [];
 
+    document.title = `${chapterLabelText} - ${mangaTitle}`;
+
+    // ---- top bar ----
+    headerInfo.innerHTML = '';
+    const topBar = buildTopBar({ mangaTitle, chapterLabelText, mangaSlug });
+    headerInfo.appendChild(topBar);
+
+    // ---- reading strip ----
     container.className = 'reader';
     container.innerHTML = '';
-
-    const topBar = document.createElement('div');
-    topBar.className = 'reader-toolbar';
-    topBar.appendChild(renderNavButton({
-      label: 'Preview',
-      targetId: prevChapter?.id || prevChapter?.chapter_id || '',
-      disabled: !prevChapter,
-    }));
-    topBar.appendChild(renderNavButton({
-      label: 'Next',
-      targetId: nextChapter?.id || nextChapter?.chapter_id || '',
-      disabled: !nextChapter,
-    }));
-
-    if (headerInfo) {
-      const titleWrap = document.createElement('div');
-      titleWrap.className = 'reader-header-copy';
-      titleWrap.innerHTML = `
-        <h2>${displayTitle}</h2>
-        <p class="meta">${displayDate}</p>
-      `;
-
-      const navWrap = document.createElement('div');
-      navWrap.className = 'reader-top-actions';
-      navWrap.appendChild(renderIconButton({
-        label: 'Preview',
-        className: 'is-prev',
-        disabled: !prevChapter,
-        onClick: prevChapter ? () => {
-          const targetId = prevChapter.id || prevChapter.chapter_id || '';
-          if (targetId) window.location.href = `/reader.html?id=${encodeURIComponent(targetId)}`;
-        } : null,
-      }));
-      navWrap.appendChild(renderIconButton({
-        label: 'Play',
-        className: 'is-play',
-        onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
-      }));
-      navWrap.appendChild(renderIconButton({
-        label: 'Next',
-        className: 'is-next',
-        disabled: !nextChapter,
-        onClick: nextChapter ? () => {
-          const targetId = nextChapter.id || nextChapter.chapter_id || '';
-          if (targetId) window.location.href = `/reader.html?id=${encodeURIComponent(targetId)}`;
-        } : null,
-      }));
-      navWrap.appendChild(renderIconButton({
-        label: 'Home',
-        className: 'is-home',
-        onClick: () => {
-          window.location.href = mangaSlug ? `/detail.html?slug=${encodeURIComponent(mangaSlug)}` : '/';
-        },
-      }));
-
-      headerInfo.innerHTML = '';
-      headerInfo.appendChild(topBar);
-      headerInfo.appendChild(titleWrap);
-      headerInfo.appendChild(navWrap);
-      setupReaderChromeToggle(headerInfo);
-    }
 
     const imageList = document.createElement('div');
     imageList.className = 'reader-pages';
@@ -249,7 +554,10 @@ async function loadChapter() {
         imageList.appendChild(img);
       });
     } else {
-      imageList.innerHTML = '<p class="error">Gambar chapter kosong atau gagal diambil.</p>';
+      const empty = document.createElement('p');
+      empty.className = 'error';
+      empty.textContent = 'Gambar chapter kosong atau gagal diambil.';
+      imageList.appendChild(empty);
     }
 
     const endSentinel = document.createElement('div');
@@ -257,12 +565,11 @@ async function loadChapter() {
     imageList.appendChild(endSentinel);
 
     container.appendChild(imageList);
-
     setupLazyImages(imageList);
 
     const goNext = () => {
-      const targetId = nextChapter?.id || nextChapter?.chapter_id || '';
-      if (targetId) window.location.href = `/reader.html?id=${encodeURIComponent(targetId)}`;
+      if (!nextChapter) return;
+      window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(getChapterId(nextChapter))}`;
     };
 
     const goNextBtn = document.createElement('button');
@@ -275,42 +582,104 @@ async function loadChapter() {
       goNextBtn.disabled = true;
       goNextBtn.classList.add('is-disabled');
     }
-
     container.appendChild(goNextBtn);
 
-    const jumpControls = document.createElement('div');
-    jumpControls.className = 'reader-float-controls';
-    jumpControls.appendChild(renderNavButton({
-      label: 'Preview',
-      targetId: prevChapter?.id || prevChapter?.chapter_id || '',
-      disabled: !prevChapter,
-    }));
-    jumpControls.appendChild(renderIconButton({
-      label: 'Play',
-      className: 'is-play',
-      onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
-    }));
-    jumpControls.appendChild(renderNavButton({
-      label: 'Next',
-      targetId: nextChapter?.id || nextChapter?.chapter_id || '',
-      disabled: !nextChapter,
-    }));
-    container.appendChild(jumpControls);
-    setupReaderChromeToggle(jumpControls);
+    // ---- side controls ----
+    const sideControls = buildSideControls();
+    container.appendChild(sideControls);
+
+    // ---- overlay panels (drawer + settings) ----
+    const { drawer, closeBtn: drawerClose } = buildChapterDrawer({ chapters, currentChapterId: chapterId });
+    const { panel: settingsPanel, closeBtn: settingsClose, speedInput } = buildSettingsPanel({ imageList });
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'reader-drawer-backdrop';
+
+    container.append(drawer, settingsPanel, backdrop);
+
+    // ---- auto-scroll ----
+    const autoScroller = createAutoScroller(() => speedInput.value);
+
+    function togglePlay(playBtn) {
+      if (autoScroller.isActive()) {
+        autoScroller.stop();
+        playBtn.textContent = '▶';
+        playBtn.setAttribute('aria-label', 'Mulai auto-scroll');
+        playBtn.title = 'Mulai auto-scroll';
+      } else {
+        autoScroller.start();
+        playBtn.textContent = '⏸';
+        playBtn.setAttribute('aria-label', 'Jeda auto-scroll');
+        playBtn.title = 'Jeda auto-scroll';
+      }
+    }
+
+    // ---- bottom bar ----
+    let chromeApi;
+    const bottomBar = buildBottomBar({
+      prevChapter,
+      nextChapter,
+      onPlayToggle: togglePlay,
+      onSettings: () => {},
+      onMenu: () => {},
+    });
+    container.appendChild(bottomBar);
+
+    const menuBtn = bottomBar.querySelector('.reader-bb-btn:nth-child(4)');
+    const settingsBtn = bottomBar.querySelector('.reader-bb-btn:nth-child(2)');
+
+    setupOverlayPanels({
+      drawer,
+      drawerClose,
+      settingsPanel,
+      settingsClose,
+      backdrop,
+      menuBtn,
+      settingsBtn,
+      showChrome: () => chromeApi?.show(),
+    });
+
+    // ---- tap-to-toggle chrome ----
+    chromeApi = setupChromeToggle({
+      topbar: topBar,
+      bottombar: bottomBar,
+      sideControls,
+      tapTarget: imageList,
+    });
+
+    // scroll (manual OR auto-scroll, since auto-scroll also fires 'scroll') hides the chrome;
+    // tapping the page toggles it back on
+    let scrollHideRaf = null;
+    window.addEventListener('scroll', () => {
+      if (window.scrollY <= 10) return;
+      if (scrollHideRaf) return;
+      scrollHideRaf = requestAnimationFrame(() => {
+        chromeApi.hide();
+        scrollHideRaf = null;
+      });
+    }, { passive: true });
+
+    // stop auto-scroll if user scrolls manually near the top area or taps chrome
+    imageList.addEventListener('click', () => {
+      if (autoScroller.isActive()) {
+        autoScroller.stop();
+        const playBtn = bottomBar.querySelector('.reader-bb-btn.is-play');
+        if (playBtn) {
+          playBtn.textContent = '▶';
+          playBtn.setAttribute('aria-label', 'Mulai auto-scroll');
+        }
+      }
+    });
 
     observeChapterEnd(endSentinel, () => {
       if (!nextChapter) return;
       const stillOnPage = Math.ceil(window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 40;
       if (stillOnPage) goNext();
     });
-
-    if (backLink && mangaSlug) {
-      backLink.href = `/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
-    }
   } catch (err) {
     console.error(err);
     container.className = 'error';
-    container.innerHTML =
+    container.textContent =
       err?.name === 'AbortError'
         ? 'Request terlalu lama. Coba lagi sebentar.'
         : 'Gagal memuat gambar chapter.';

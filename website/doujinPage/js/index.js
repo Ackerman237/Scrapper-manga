@@ -59,9 +59,9 @@ async function loadManga(query = '', page = 1, isAppend = false) {
         manga.chapters.slice(0, 2).forEach(ch => {
           const chId = ch.id || ch.chapter_id || '';
           const isNew = ch.isNew ? '<span class="badge-new">NEW</span>' : '';
-          // PERBAIKAN: Mengarahkan path eksplisit ke /doujinPage/reader.html
+          // PERBAIKAN: Mengarahkan path eksplisit ke /doujinPage/html/reader.html
           chaptersHTML += `
-            <a href="/doujinPage/reader.html?id=${encodeURIComponent(chId)}" class="chapter-btn" onclick="event.stopPropagation();">
+            <a href="/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}" class="chapter-btn" onclick="event.stopPropagation();">
               <span>${ch.title || 'Chapter ' + ch.chapter} ${isNew}</span>
               <span class="time-ago">${ch.date || ch.releaseTime || ''}</span>
             </a>
@@ -83,7 +83,7 @@ async function loadManga(query = '', page = 1, isAppend = false) {
       // PERBAIKAN: Mengarahkan path eksplisit ke /doujinPage/detail.html
       card.querySelectorAll('[data-slug]').forEach(el => {
         el.addEventListener('click', () => {
-          window.location.href = `/doujinPage/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
+          window.location.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
         });
       });
 

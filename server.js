@@ -14,7 +14,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 2. Serve Static Files (Folder website/ untuk HTML, CSS, & JS Frontend)
+
 app.use(express.static(path.join(__dirname, 'website')));
+
+app.use('/neko', express.static(path.join(__dirname, 'website', 'nekoPage')));
+
+app.get('/', (_req, res) => {
+  res.redirect('/doujinPage/html/index.html');
+});
+
+app.use(
+  '/doujinPage/html',
+  express.static(path.join(__dirname, 'website', 'doujinPage'))
+);
 
 // 3. Routing API
 app.use('/api', apiRoutes);
