@@ -102,7 +102,7 @@ cp .env.example .env
 # Update .env with your specific configuration
 ```
 
-> **Note:** Environment configuration must be set up independently. Refer to the `.env.example` section in [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) or its original README.md for detailed instructions.
+> **Note:** Environment configuration must be set up independently. Refer to the `.env.example` section in [doujin-scraper](https://github.com/kyy0887/doujin-scraper) or its original README.md for detailed instructions.
 
 4. Run the server:
 ```bash
@@ -131,7 +131,7 @@ This is a personal learning project. Features and architecture are subject to ch
 
 This project is heavily adapted and inspired by the following repository:
 
-- [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper) — Used as the primary foundation for the scraping logic, API structure, and overall project architecture.
+- [doujin-scraper](https://github.com/kyy0887/doujin-scraper) — Used as the primary foundation for the scraping logic, API structure, and overall project architecture.
 
 ---
 
@@ -139,4 +139,4 @@ This project is heavily adapted and inspired by the following repository:
 
 License will be determined at a later stage of development.
 
-Portions of this project are adapted from [doujin-scrapper](https://github.com/kyy0887/doujin-scrapper). Please refer to the original repository for its license terms and source code usage guidelines.
+Portions of this project are adapted from [doujin-scraper](https://github.com/kyy0887/doujin-scraper). Please refer to the original repository for its license terms and source code usage guidelines.
