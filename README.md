@@ -87,7 +87,7 @@ A primary focus of this project, featuring:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/syukronAbdullah/Scrapper-manga.git
+git clone https://github.com/Ackerman237/Scrapper-manga.git
 cd Scrapper-manga
 ```
 
