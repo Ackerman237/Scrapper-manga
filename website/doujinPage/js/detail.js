@@ -1,6 +1,41 @@
 // ============================================================
 // detail.js — Mengisi elemen-elemen di detail.html dari API Asli
 // ============================================================
+
+// Doujin Library — shared nav toggle (hamburger menu mobile)
+// Load di SEMUA halaman, taruh sebelum script khusus halaman (detail.js, reader.js, dst)
+
+(function () {
+  const hamburger = document.getElementById('navHamburger');
+  const navLinks = document.getElementById('navLinks');
+
+  if (!hamburger || !navLinks) return;
+
+  function closeNav() {
+    navLinks.classList.remove('is-open');
+    hamburger.classList.remove('is-active');
+    hamburger.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleNav() {
+    const isOpen = navLinks.classList.toggle('is-open');
+    hamburger.classList.toggle('is-active', isOpen);
+    hamburger.setAttribute('aria-expanded', String(isOpen));
+  }
+
+  hamburger.addEventListener('click', toggleNav);
+
+  // tutup otomatis kalau salah satu link diklik
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', closeNav);
+  });
+
+  // tutup otomatis kalau resize balik ke desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 700) closeNav();
+  });
+})();
+
 const REQUEST_TIMEOUT_MS = 12000;
 
 async function fetchJsonWithTimeout(url) {

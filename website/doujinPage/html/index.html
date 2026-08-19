@@ -19,7 +19,7 @@
         </a>
       </div>
 
-      <nav class="nav-links">
+      <nav class="nav-links" id="navLinks">
         <a href="/nekoPage/html/">NEKO VIDEO</a>
         <a href="/doujinPage/html/index.html" class="active">HOME</a>
         <a href="/doujinPage/html/allManga.html">ALL</a>
@@ -33,6 +33,10 @@
         <input type="text" id="searchInput" placeholder="Cari judul komik...">
         <button type="submit">CARI</button>
       </form>
+
+      <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
 
@@ -91,6 +95,7 @@
   <!-- FLOATING BACK TO TOP BUTTON -->
   <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
 
+  <script src="/doujinPage/js/nav.js" defer></script>
   <script src="/doujinPage/js/index.js" defer></script>
 </body>
 </html>
