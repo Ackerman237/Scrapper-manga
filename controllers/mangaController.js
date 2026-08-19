@@ -1,6 +1,6 @@
-import { 
-  scrapeMangaList, 
-  scrapeMangaDetail, 
+import {
+  scrapeMangaList,
+  scrapeMangaDetail,
   scrapeChapterImages
 } from '../lib/scraper.js';
 
@@ -29,27 +29,22 @@ export const getMangaList = async (req, res) => {
 
     return res.json({
       success: true,
-
       data,
-
       pagination: {
         page,
         limit,
         hasPrevious: page > 1,
-
-        // Selama upstream belum memberikan total count,
-        // jumlah item digunakan sebagai indikator sementara.
         hasNext: data.length === limit
       }
     });
 
   } catch (err) {
+    console.error('getMangaList error:', err);
 
     return res.status(500).json({
       success: false,
       message: err.message
     });
-
   }
 };
 
