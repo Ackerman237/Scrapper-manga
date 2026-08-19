@@ -1,22 +1,23 @@
 /* =========================================================
    Doujin Library — DETAIL PAGE
-   Cover card, tombol read/bookmark/notify, tabs, panel info,
-   rating box, synopsis, daftar chapter (list detail).
    Load setelah base.css. Khusus dipakai di detail.html.
    ========================================================= */
 
-/* =========================================================
-   DETAIL PAGE
-   ========================================================= */
+/* ---------- layout ---------- */
 
 .detail-layout {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 320px minmax(450px, 1fr) 380px;
   gap: 24px;
   align-items: start;
+  width: 100%;
 }
 
-/* ---- left column: cover card ---- */
+.detail-main {
+  min-width: 0;
+}
+
+/* ---------- left column: cover card ---------- */
 
 .detail-cover-card {
   background: var(--bg-alt);
@@ -25,13 +26,14 @@
   padding: 20px;
   position: sticky;
   top: 90px;
+  align-self: start;
 }
 
 .detail-cover-frame {
   position: relative;
   border-radius: var(--radius);
   overflow: hidden;
-  aspect-ratio: 3/4;
+  aspect-ratio: 3 / 4;
   margin-bottom: 18px;
   background-size: cover;
   background-position: center;
@@ -109,8 +111,15 @@
   letter-spacing: 0.05em;
 }
 
-.detail-badge.type { color: #6fc9a8; border-color: rgba(111, 201, 168, 0.35); }
-.detail-badge.status { color: var(--ink); border-color: rgba(193, 68, 58, 0.4); }
+.detail-badge.type {
+  color: #6fc9a8;
+  border-color: rgba(111, 201, 168, 0.35);
+}
+
+.detail-badge.status {
+  color: var(--ink);
+  border-color: rgba(193, 68, 58, 0.4);
+}
 
 .btn-read-now {
   display: flex;
@@ -131,7 +140,9 @@
   transition: background 0.15s ease;
 }
 
-.btn-read-now:hover { background: var(--ink-soft); }
+.btn-read-now:hover {
+  background: var(--ink-soft);
+}
 
 .detail-secondary-row {
   display: flex;
@@ -156,7 +167,9 @@
   cursor: pointer;
 }
 
-.btn-bookmark:hover { border-color: var(--ink); }
+.btn-bookmark:hover {
+  border-color: var(--ink);
+}
 
 .btn-notify {
   width: 46px;
@@ -189,9 +202,12 @@
   cursor: pointer;
 }
 
-.icon-btn:hover { color: var(--ink); border-color: var(--ink); }
+.icon-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
 
-/* ---- right column ---- */
+/* ---------- right column: tabs & panels ---------- */
 
 .detail-tabs {
   display: flex;
@@ -227,7 +243,9 @@
   padding: 24px;
 }
 
-.panel + .panel { margin-top: 20px; }
+.panel + .panel {
+  margin-top: 20px;
+}
 
 .panel-title {
   display: flex;
@@ -240,7 +258,9 @@
   color: var(--text);
 }
 
-.panel-title .icon { color: var(--ink); }
+.panel-title .icon {
+  color: var(--ink);
+}
 
 .info-body {
   display: grid;
@@ -270,20 +290,53 @@
   gap: 8px;
 }
 
+.genre-section {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.genre-section .info-row-label {
+  margin-bottom: 10px;
+}
+
 .genre-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 8px 10px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.genre-tags::-webkit-scrollbar {
+  width: 6px;
+}
+
+.genre-tags::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: var(--radius);
+}
+
+.genre-tags::-webkit-scrollbar-thumb:hover {
+  background: var(--ink);
 }
 
 .genre-tag {
-  background: var(--ink);
-  color: var(--text);
+  background: var(--card);
+  color: var(--text-muted);
+  border: 1px solid var(--border-soft);
   font-family: var(--font-display);
   font-size: 11px;
   letter-spacing: 0.04em;
   padding: 6px 12px;
   border-radius: var(--radius);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.genre-tag:hover {
+  border-color: var(--ink);
+  color: var(--text);
 }
 
 /* rating sidebar box */
@@ -292,14 +345,14 @@
   background: var(--card);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 20px 16px;
   text-align: center;
   height: fit-content;
 }
 
 .rating-score {
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: clamp(28px, 5vw, 40px);
   font-weight: 700;
   color: var(--text);
   line-height: 1;
@@ -307,12 +360,14 @@
 
 .rating-stars {
   color: var(--gold);
-  font-size: 16px;
+  font-size: clamp(13px, 2vw, 16px);
   margin: 10px 0 18px;
   letter-spacing: 2px;
 }
 
-.rating-stars .dim { color: var(--border); }
+.rating-stars .dim {
+  color: var(--border);
+}
 
 .views-label {
   font-family: var(--font-display);
@@ -324,9 +379,10 @@
 
 .views-value {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: clamp(15px, 3.5vw, 22px);
   font-weight: 600;
   color: #6fa8dc;
+  overflow-wrap: break-word;
 }
 
 /* synopsis */
@@ -352,7 +408,7 @@
   padding: 0;
 }
 
-/* chapter list panel */
+/* ---------- chapter list panel ---------- */
 
 .chapter-panel-head {
   display: flex;
@@ -387,7 +443,9 @@
   width: 160px;
 }
 
-.chapter-search .icon { color: var(--text-faint); }
+.chapter-search .icon {
+  color: var(--text-faint);
+}
 
 .sort-btn {
   width: 38px;
@@ -401,10 +459,30 @@
   cursor: pointer;
 }
 
+.chapter-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* sticky sidebar wrapping the chapter list */
+.chapter-sidebar {
+  position: sticky;
+  top: 90px;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+  display: block !important;
+  background: #15120f;
+  min-height: 500px;
+}
+
 .chapter-list-detail {
+  height: calc(100vh - 260px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-right: 8px;
 }
 
 .chapter-row {
@@ -459,51 +537,116 @@
   gap: 4px;
 }
 
-.chapter-row.is-latest .chapter-row-body h4 { color: var(--ink); }
-
-/* ---------- responsive (detail) ---------- */
-
-@media (max-width: 1024px) {
-  .detail-layout { grid-template-columns: 1fr; }
-  .detail-cover-card { position: static; max-width: 320px; margin: 0 auto; }
-  .info-body { grid-template-columns: 1fr; }
+.chapter-row.is-latest .chapter-row-body h4 {
+  color: var(--ink);
 }
 
-@media (max-width: 700px) {
-  .chapter-panel-head { flex-direction: column; align-items: flex-start; }
-}
+/* ---------- back to home link ---------- */
 
 .back-home-container {
   width: 100%;
   max-width: 1200px;
-
   margin: 20px auto 0;
-
   padding: 0 20px;
 }
 
-
 .back-home-btn {
-
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
   font-size: 13px;
-  letter-spacing: .08em;
-
+  letter-spacing: 0.08em;
   color: var(--text-muted);
-
   text-decoration: none;
-
-  transition: .2s ease;
+  transition: 0.2s ease;
 }
 
-
 .back-home-btn:hover {
-
   color: var(--text);
-
   transform: translateX(-3px);
+}
 
+/* ---------- responsive ---------- */
+
+@media (max-width: 1200px) {
+  .detail-layout {
+    grid-template-columns: 280px 1fr;
+  }
+
+  .chapter-sidebar {
+    grid-column: 1 / -1;
+    position: relative;
+    height: auto;
+  }
+
+  .chapter-list-detail {
+    height: 500px;
+  }
+}
+
+@media (max-width: 700px) {
+  .chapter-panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-body {
+    grid-template-columns: 1fr;
+  }
+
+  .rating-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .rating-main,
+  .rating-views {
+    text-align: left;
+  }
+
+  .rating-stars {
+    margin: 6px 0 0;
+  }
+
+  .views-value {
+    text-align: right;
+  }
+}
+
+/* HP kecil: paksa satu kolom penuh, matikan sticky, elemen fixed-width jadi fleksibel */
+@media (max-width: 640px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .detail-cover-card {
+    position: static;
+  }
+
+  .chapter-panel-head {
+    width: 100%;
+  }
+
+  .chapter-tools {
+    width: 100%;
+  }
+
+  .chapter-search {
+    flex: 1;
+  }
+
+  .chapter-search input {
+    width: 100%;
+  }
+
+  .chapter-list-detail {
+    height: 420px;
+  }
+
+  .panel {
+    padding: 18px;
+  }
 }

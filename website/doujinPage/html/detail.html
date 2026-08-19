@@ -11,7 +11,7 @@
 
 <body>
 
-  <!-- HEADER / NAVBAR (sama seperti index.html) -->
+  <!-- HEADER / NAVBAR -->
   <header>
     <div class="nav-container">
       <div class="brand">
@@ -36,26 +36,22 @@
   </header>
 
   <div class="back-home-container">
-
-  <a href="/doujinPage/html/index.html" class="back-home-btn">
-    ← BACK TO HOME
-  </a>
-
-</div>
+    <a href="/doujinPage/html/index.html" class="back-home-btn">
+      ← BACK TO HOME
+    </a>
+  </div>
 
   <main>
     <div id="detailContainer">
 
-      <!-- state loading, diganti isinya oleh detail.js setelah fetch selesai -->
+      <!-- State loading -->
       <p class="loading" id="detailLoading">Memuat detail manga...</p>
 
-      <!-- Layout asli, disembunyikan sampai data siap. detail.js tinggal
-           mengisi elemen-elemen ber-id di bawah ini lalu menghapus class "hidden" -->
+      <!-- Layout utama -->
       <div class="detail-layout hidden" id="detailLayout" style="display:none;">
 
         <!-- ================= KOLOM KIRI: COVER ================= -->
         <aside class="detail-cover-card">
-
           <div class="detail-cover-frame" id="coverFrame" style="background-image:url('');">
             <img id="coverImg" src="" alt="Cover">
           </div>
@@ -90,9 +86,8 @@
           </div>
         </aside>
 
-        <!-- ================= KOLOM KANAN ================= -->
+        <!-- ================= KOLOM TENGAH: INFO + SYNOPSIS ================= -->
         <div class="detail-main">
-
           <div class="detail-tabs">
             <button class="detail-tab active" id="tabInfo" type="button">📖 Detail Info</button>
             <button class="detail-tab" id="tabMoreSeries" type="button">👍 More Series</button>
@@ -104,7 +99,6 @@
 
             <div class="info-body">
               <div class="info-grid">
-
                 <div>
                   <div class="info-row-label">TYPE</div>
                   <div class="info-row-value"><span id="infoTypeFlag">🇰🇷</span> <span id="infoType">—</span></div>
@@ -144,21 +138,25 @@
                   <div class="info-row-label">CHARACTERS</div>
                   <div class="info-row-value" id="infoCharacters">N/A</div>
                 </div>
-
-                <div>
-                  <div class="info-row-label">GENRES</div>
-                  <div class="genre-tags" id="genreTags"><!-- genre-tag diisi JS --></div>
-                </div>
-
               </div>
 
               <!-- rating box kanan -->
               <div class="rating-box">
-                <div class="rating-score" id="ratingScore">0.0</div>
-                <div class="rating-stars" id="ratingStars">★★★★☆</div>
-                <div class="views-label">👁 VIEWS</div>
-                <div class="views-value" id="viewsValue">0</div>
+                <div class="rating-main">
+                  <div class="rating-score" id="ratingScore">0.0</div>
+                  <div class="rating-stars" id="ratingStars">★★★★☆</div>
+                </div>
+                <div class="rating-views">
+                  <div class="views-label">👁 VIEWS</div>
+                  <div class="views-value" id="viewsValue">0</div>
+                </div>
               </div>
+            </div>
+
+            <!-- genre full width, terpisah dari grid supaya tag bisa napas -->
+            <div class="genre-section">
+              <div class="info-row-label">GENRES</div>
+              <div class="genre-tags" id="genreTags"><!-- genre-tag diisi JS --></div>
             </div>
           </section>
 
@@ -168,9 +166,11 @@
             <p class="synopsis-text" id="synopsisText">—</p>
             <button class="show-more-btn" id="synopsisToggle" type="button">SHOW MORE ▾</button>
           </section>
+        </div>
 
-          <!-- panel: List Chapter -->
-          <section class="panel">
+        <!-- ================= KOLOM KANAN: CHAPTER LIST ================= -->
+        <aside class="chapter-sidebar">
+          <section class="panel chapter-panel">
             <div class="chapter-panel-head">
               <h3 class="panel-title" style="margin:0;"><span class="icon">📖</span> List Chapter (<span id="chapterCount">0</span>)</h3>
               <div class="chapter-tools">
@@ -186,8 +186,8 @@
               <!-- chapter-row diisi JS -->
             </div>
           </section>
+        </aside>
 
-        </div>
       </div>
 
       <p class="error hidden" id="detailError" style="display:none;">Gagal memuat detail manga.</p>
