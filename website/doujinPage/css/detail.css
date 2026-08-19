@@ -472,3 +472,38 @@
 @media (max-width: 700px) {
   .chapter-panel-head { flex-direction: column; align-items: flex-start; }
 }
+
+.back-home-container {
+  width: 100%;
+  max-width: 1200px;
+
+  margin: 20px auto 0;
+
+  padding: 0 20px;
+}
+
+
+.back-home-btn {
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 13px;
+  letter-spacing: .08em;
+
+  color: var(--text-muted);
+
+  text-decoration: none;
+
+  transition: .2s ease;
+}
+
+
+.back-home-btn:hover {
+
+  color: var(--text);
+
+  transform: translateX(-3px);
+
+}
