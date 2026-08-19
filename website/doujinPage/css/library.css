@@ -141,3 +141,76 @@
 .manga-card.is-hidden {
   display: none;
 }
+
+/* =========================================================
+   Library Search
+   ========================================================= */
+
+.library-search {
+  width: 100%;
+  margin-bottom: 30px;
+}
+
+.library-search input {
+  width: 100%;
+  padding: 14px 16px;
+
+  background: var(--bg-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+
+  color: var(--text);
+
+  font-family: var(--font-display);
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.library-search input::placeholder {
+  color: var(--text-faint);
+}
+
+.library-search input:focus {
+  border-color: var(--ink);
+  background: var(--card);
+}
+
+/* =========================================================
+   Library Header Layout
+   ========================================================= */
+
+.library-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+
+/* Search desktop */
+
+.library-header .library-search {
+  width: 380px;
+  margin-bottom: 24px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+  .library-header {
+    display: block;
+  }
+
+  .library-header .library-search {
+    width: 100%;
+    margin-top: 20px;
+  }
+
+}

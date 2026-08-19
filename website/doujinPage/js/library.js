@@ -35,7 +35,8 @@
 // Logika Render Library (Favorites & Bookmarks)
 // ============================================================
 
-const INITIAL_VISIBLE_COUNT = 6; // Jumlah card yang langsung ditampilkan sebelum tombol "See More" diklik
+const INITIAL_VISIBLE_COUNT = 6; 
+let librarySearchQuery = ""; 
 
 function getStorageData(key) {
   return JSON.parse(localStorage.getItem(key)) || {};
@@ -46,7 +47,7 @@ function removeStorageItem(key, slug) {
   if (data[slug]) {
     delete data[slug];
     localStorage.setItem(key, JSON.stringify(data));
-    renderAllSections(); // Refresh tampilan
+    renderAllSections(); 
   }
 }
 
@@ -58,7 +59,22 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
   if (!grid) return;
 
   const dataObj = getStorageData(storageKey);
-  const items = Object.values(dataObj);
+  let items = Object.values(dataObj);
+  console.log(storageKey, items);
+
+  if (librarySearchQuery.trim() !== "") {
+
+  items = items.filter(item => {
+
+    const title =
+      String(item.title || "")
+      .toLowerCase();
+
+    return title.includes(librarySearchQuery);
+
+  });
+
+}
 
   grid.innerHTML = "";
 
@@ -78,7 +94,6 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
     const title = item.title || "Tanpa Judul";
     const rating = item.rating ? Number(item.rating).toFixed(1) : '-';
 
-    // Bagian tanggal "Disimpan: ..." telah dihapus sepenuhnya di sini
     card.innerHTML = `
       <div class="manga-card-thumb" style="background-image: url('${coverUrl}')" data-detail="${encodeURIComponent(item.slug)}"></div>
       <div class="manga-card-body">
@@ -92,14 +107,12 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
       </div>
     `;
 
-    // Event klik untuk mengarah ke halaman detail
     card.querySelectorAll('[data-detail]').forEach(el => {
       el.addEventListener('click', () => {
         window.location.href = `detail.html?slug=${encodeURIComponent(item.slug)}`;
       });
     });
 
-    // Event tombol hapus khusus bookmark
     const removeBtn = card.querySelector('.btn-remove-item');
     if (removeBtn) {
       removeBtn.addEventListener('click', (e) => {
@@ -113,16 +126,16 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
     grid.appendChild(card);
   });
 
-  // Atur tombol "See More" jika item melebihi batas awal
   if (items.length > INITIAL_VISIBLE_COUNT && seeMoreBtn) {
     seeMoreBtn.style.display = "block";
     let isExpanded = false;
 
+    // Bersihkan event onclick sebelumnya agar tidak terjadi tumpang tindih
     seeMoreBtn.onclick = () => {
       isExpanded = !isExpanded;
-      const hiddenCards = grid.querySelectorAll(".manga-card.is-hidden, .manga-card.is-revealed");
+      const allCards = grid.querySelectorAll(".manga-card");
       
-      hiddenCards.forEach((card, idx) => {
+      allCards.forEach((card, idx) => {
         if (idx >= INITIAL_VISIBLE_COUNT) {
           card.classList.toggle("is-hidden", !isExpanded);
           card.classList.toggle("is-revealed", isExpanded);
@@ -142,11 +155,19 @@ function renderAllSections() {
 }
 
 // ============================================================
-// Inisialisasi DOM & Tombol Back to Top
+// Inisialisasi DOM & Tombol Back to Top (Diperbaiki)
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
   renderAllSections();
+
+  const searchInput = document.getElementById("librarySearch");
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      librarySearchQuery = this.value.toLowerCase().trim();
+      renderAllSections();
+    });
+  }
 
   // Back to Top functionality
   const backToTopBtn = document.getElementById('backToTop');
