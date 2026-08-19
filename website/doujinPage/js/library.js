@@ -60,20 +60,13 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
 
   const dataObj = getStorageData(storageKey);
   let items = Object.values(dataObj);
-  console.log(storageKey, items);
-
   if (librarySearchQuery.trim() !== "") {
-
   items = items.filter(item => {
-
     const title =
       String(item.title || "")
       .toLowerCase();
-
     return title.includes(librarySearchQuery);
-
   });
-
 }
 
   grid.innerHTML = "";
