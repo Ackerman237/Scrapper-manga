@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doujin Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="/doujinPage/css/base.css">
+  <link rel="stylesheet" href="/doujinPage/css/index.css">
+</head>
+<body>
+
+  <!-- HEADER / NAVBAR -->
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <a href="/">
+          <h1>Doujin Library</h1>
+        </a>
+      </div>
+
+      <nav class="nav-links">
+        <a href="/neko/">NEKO VIDEO</a>
+        <a href="/" class="active">HOME</a>
+        <a href="#">ALL</a>
+        <a href="#">CATEGORIES</a>
+        <a href="#">BLOG</a>
+        <a href="#">ADMIN</a>
+      </nav>
+
+      <!-- SEARCH BAR -->
+      <form id="searchForm" class="search-box">
+        <input type="text" id="searchInput" placeholder="Cari judul komik...">
+        <button type="submit">CARI</button>
+      </form>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- HERO BANNER SECTION -->
+    <section class="hero-section">
+      <div class="hero-banner" style="background-image: linear-gradient(to top, rgba(21,18,15,0.9), transparent), url('https://placehold.co/1200x400/201b16/ece6dc?text=Featured+Manga');">
+        <div class="hero-tags">
+          <span class="badge badge-ink">MANHWA</span>
+          <span class="badge badge-gold">⭐ 8.8</span>
+        </div>
+        <h2 class="hero-title">I BANGED ALL MY CLASSMATES AFTER GRADUATION</h2>
+        <div class="hero-actions">
+          <button class="btn btn-primary">READ NOW</button>
+          <button class="btn btn-icon">INFO</button>
+        </div>
+      </div>
+
+      <!-- BLOG SIDEBAR PREVIEW -->
+      <aside class="blog-sidebar">
+        <h3>BLOG <a href="#" class="see-all">SEMUA</a></h3>
+        <div class="blog-card">
+          <div class="blog-icon">📜</div>
+          <div>
+            <h4>Berlangganan VIP Premium</h4>
+            <p>20 Juli 2026</p>
+          </div>
+        </div>
+        <div class="blog-card">
+          <div class="blog-icon">📜</div>
+          <div>
+            <h4>Kenapa Website Ada Iklan?</h4>
+            <p>24 Juni 2026</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- MANGA LIST SECTION -->
+    <section class="manga-section">
+      <h2 id="sectionTitle" class="section-title">Update Terbaru</h2>
+
+      <div id="mangaGrid" class="manga-grid">
+        <p class="loading">Memuat manga...</p>
+      </div>
+
+      <!-- TOMBOL SEE MORE -->
+      <div class="load-more-container">
+        <button id="loadMoreBtn" class="btn-see-more">SEE MORE</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FLOATING BACK TO TOP BUTTON -->
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+
+  <script src="/doujinPage/js/index.js" defer></script>
+</body>
+</html>

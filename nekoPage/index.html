@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neko Video Streaming</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="/nekoPage/css/base.css">
+  <link rel="stylesheet" href="/nekoPage/css/index.css">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <a href="/neko/">
+          <h1>Neko Video</h1>
+        </a>
+      </div>
+      <nav class="nav-links">
+        <a href="/">MANGA</a>
+        <a href="/neko/" class="active">NEKO VIDEO</a>
+      </nav>
+      <form id="searchForm" class="search-box">
+        <input type="text" id="searchInput" placeholder="Cari video Neko...">
+        <button type="submit">CARI</button>
+      </form>
+    </div>
+  </header>
+
+  <main>
+    <!-- Kontainer Pilihan Genre / Kategori -->
+    <section class="categories-section">
+      <div id="categoriesContainer" class="categories-grid">
+        <!-- Tombol kategori akan dimuat secara dinamis lewat JavaScript -->
+      </div>
+    </section>
+
+    <section class="manga-section">
+      <h2 id="sectionTitle" class="section-title">Video Terbaru</h2>
+      <div id="videoGrid" class="video-grid">
+        <p class="loading">Memuat video...</p>
+      </div>
+      <div class="load-more-container">
+        <button id="loadMoreBtn" class="btn-see-more">SEE MORE</button>
+      </div>
+    </section>
+  </main>
+
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+
+  <script src="/nekoPage/js/index.js" defer></script>
+</body>
+</html>

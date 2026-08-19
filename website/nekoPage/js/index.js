@@ -47,7 +47,7 @@ async function fetchVideos(page = 1, query = '', append = false) {
       card.className = 'video-card';
       
       card.onclick = () => {
-        window.location.href = `/nekoPage/watch.html?slug=${encodeURIComponent(video.slug)}`;
+        window.location.href = `/neko/watch.html?slug=${encodeURIComponent(video.slug)}`;
       };
 
       const thumbUrl = video.thumb || video.image || video.cover || 'https://placehold.co/600x337/201b16/ece6dc?text=No+Thumbnail';
