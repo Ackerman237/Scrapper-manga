@@ -12,7 +12,10 @@ export const getMangaList = async (req, res) => {
     );
 
     const limit = Math.min(
-      Math.max(parseInt(req.query.limit, 10) || 10, 1),
+      Math.max(
+        parseInt(req.query.limit, 10) || 10,
+        1
+      ),
       100
     );
 
@@ -21,11 +24,21 @@ export const getMangaList = async (req, res) => {
         ? req.query.query.trim()
         : '';
 
-    const data = await scrapeMangaList({
-      page,
-      limit,
-      query
-    });
+    const result =
+      await scrapeMangaList({
+        page,
+        limit,
+        query,
+        withMeta: true
+      });
+
+    const data = result.data;
+    const total = result.total;
+
+    const totalPages =
+      Number.isFinite(total)
+        ? Math.ceil(total / limit)
+        : null;
 
     return res.json({
       success: true,
@@ -33,8 +46,13 @@ export const getMangaList = async (req, res) => {
       pagination: {
         page,
         limit,
+        total,
+        totalPages,
         hasPrevious: page > 1,
-        hasNext: data.length === limit
+        hasNext:
+          totalPages !== null
+            ? page < totalPages
+            : data.length === limit
       }
     });
 
@@ -50,65 +68,67 @@ export const getMangaList = async (req, res) => {
 
 export const getMangaDetail = async (req, res) => {
   try {
-    const { slug } = req.query;
-    if (!slug) {
-      return res.status(400).json({ success: false, message: 'Parameter slug dibutuhkan' });
-    }
-
+    const { slug } = req.params;
     const data = await scrapeMangaDetail(slug);
-    return res.json({ success: true, data });
+
+    return res.json({
+      success: true,
+      data
+    });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error('getMangaDetail error:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };
 
 export const getChapterImages = async (req, res) => {
   try {
-    const { id } = req.query;
-    if (!id) {
-      return res.status(400).json({ success: false, message: 'Parameter ID Chapter dibutuhkan' });
-    }
-
+    const { id } = req.params;
     const data = await scrapeChapterImages(id);
-    return res.json({ success: true, data });
+
+    return res.json({
+      success: true,
+      data
+    });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error('getChapterImages error:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };
 
 export const proxyImage = async (req, res) => {
   try {
     const imageUrl = req.query.url;
-    const chapterId = req.query.chapterId || '';
-
     if (!imageUrl) {
-      return res.status(400).json({ success: false, message: 'URL gambar wajib diisi' });
+      return res.status(400).json({ success: false, message: 'URL gambar tidak disertakan' });
     }
 
-    const refererUrl = chapterId
-      ? `https://doujin.desu.xxx/reader/${chapterId}`
-      : 'https://doujin.desu.xxx/';
-
-    const imageRes = await fetch(imageUrl, {
+    const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Referer': refererUrl,
-        'Origin': 'https://doujin.desu.xxx',
-        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-      },
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Referer': 'https://doujin.desu.xxx'
+      }
     });
 
-    if (!imageRes.ok) {
-      return res.status(imageRes.status).json({ success: false, message: 'Gagal mengambil gambar dari CDN' });
+    if (!response.ok) {
+      return res.status(response.status).json({ success: false, message: 'Gagal mengambil gambar dari sumber' });
     }
 
-    const contentType = imageRes.headers.get('content-type') || 'image/webp';
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=86400');
 
-    const arrayBuffer = await imageRes.arrayBuffer();
-    return res.send(Buffer.from(arrayBuffer));
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    const buffer = await response.arrayBuffer();
+    return res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('proxyImage error:', err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 };

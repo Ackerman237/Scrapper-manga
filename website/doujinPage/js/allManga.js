@@ -75,12 +75,14 @@ async function loadManga(query = '', page = 1) {
         : (result.data || result.results || []);
 
     const pagination =
-      result?.pagination || {
-        page,
-        limit: currentLimit,
-        hasPrevious: page > 1,
-        hasNext: mangaList.length === currentLimit
-      };
+  result?.pagination || {
+    page,
+    limit: currentLimit,
+    total: mangaList.length,
+    totalPages: 1,
+    hasPrevious: page > 1,
+    hasNext: false
+  };
 
     grid.innerHTML = '';
     renderPagination(pagination);
@@ -110,10 +112,11 @@ async function loadManga(query = '', page = 1) {
   `;
 
   renderPagination({
-    page,
-    hasPrevious: page > 1,
-    hasNext: false
-  });
+  page,
+  totalPages: 1,
+  hasPrevious: page > 1,
+  hasNext: false
+});
 
   const clearSearchBtn =
     document.getElementById('clearSearchBtn');
@@ -322,6 +325,7 @@ function goToPage(page) {
 
 function renderPagination({
   page,
+  totalPages,
   hasPrevious,
   hasNext
 }) {
@@ -346,24 +350,34 @@ function renderPagination({
 
   pageNumbers.innerHTML = '';
 
-  const pages = new Set();
-
-  // Halaman pertama selalu tersedia
-  pages.add(1);
-
-  // Beberapa halaman sebelum current page
-  for (
-    let number = Math.max(1, page - 2);
-    number <= page;
-    number++
+  // fallback kalau backend belum kasih totalPages
+  if (
+    !Number.isFinite(totalPages) ||
+    totalPages < 1
   ) {
-    pages.add(number);
+    totalPages = 1;
   }
 
-  // Tampilkan satu halaman berikutnya
-  // hanya jika data menunjukkan masih ada next page
-  if (hasNext) {
-    pages.add(page + 1);
+  const pages = new Set();
+
+  // halaman pertama
+  pages.add(1);
+
+  // halaman terakhir
+  pages.add(totalPages);
+
+  // sekitar current page
+  for (
+    let number = page - 2;
+    number <= page + 2;
+    number++
+  ) {
+    if (
+      number >= 1 &&
+      number <= totalPages
+    ) {
+      pages.add(number);
+    }
   }
 
   const sortedPages =
@@ -404,7 +418,6 @@ function renderPagination({
       String(number);
 
     if (number === page) {
-
       button.classList.add(
         'active'
       );
@@ -414,15 +427,15 @@ function renderPagination({
         'page'
       );
 
-    } else {
+      button.disabled = true;
 
+    } else {
       button.addEventListener(
         'click',
         () => {
           goToPage(number);
         }
       );
-
     }
 
     pageNumbers.appendChild(
