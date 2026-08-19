@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Watch Video - Neko</title>
+  <link rel="stylesheet" href="/nekoPage/css/base.css">
+  <link rel="stylesheet" href="/nekoPage/css/watch.css">
+</head>
+<body>
+
+  <div class="nav-header">
+    <a href="/nekoPage/html/index.html">← Kembali ke Neko List</a>
+    <a href="/doujinPage/html/index.html">Ke Doujin Manga</a>
+  </div>
+
+  <main class="player-container">
+
+    <div class="watch-head">
+      <h2 id="videoTitle" class="video-title-main">Memuat Judul...</h2>
+      <span class="live-badge"><span class="live-dot"></span>STREAMING</span>
+    </div>
+
+    <div class="player-card">
+      <div class="video-wrapper" id="playerBox">
+        <p class="player-loading-text">Memuat Player Video...</p>
+      </div>
+
+      <div id="serverSelectorContainer" class="server-selector"></div>
+
+      <div class="external-fallback" id="externalFallbackContainer" style="display: none;">
+        <a id="externalPlayerBtn" href="#" target="_blank" class="external-btn">
+          🔗 Buka Player di Tab Baru (Jika Layar Hitam / Terblokir)
+        </a>
+      </div>
+    </div>
+
+    <section class="video-details">
+      <h3 class="panel-title"><span class="icon">☰</span> Sinopsis</h3>
+      <p id="videoSynopsis" class="synopsis-text"></p>
+    </section>
+
+  </main>
+
+  <script src="/nekoPage/js/watch.js"></script>
+</body>
+</html>

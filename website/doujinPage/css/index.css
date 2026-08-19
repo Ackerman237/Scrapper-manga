@@ -1,0 +1,296 @@
+/* =========================================================
+   Doujin Library — INDEX PAGE
+   Hero section, sidebar blog, grid manga (card + rating +
+   chapter list singkat), tombol load more.
+   Load setelah base.css. Khusus dipakai di index.html.
+   ========================================================= */
+
+/* ---------- hero section ---------- */
+
+.hero-section {
+  display: grid;
+  grid-template-columns: 2.8fr 1fr;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.hero-banner {
+  height: 300px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+  background-size: cover;
+  background-position: center;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.hero-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.badge {
+  padding: 4px 10px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius);
+}
+
+.badge-ink { background: var(--ink); color: var(--text); }
+.badge-gold { background: rgba(0, 0, 0, 0.6); color: var(--gold); border: 1px solid var(--border); }
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0 0 14px;
+  letter-spacing: 0.02em;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-primary { background: var(--ink); color: var(--text); border-color: var(--ink); }
+.btn-primary:hover { background: var(--ink-soft); }
+.btn-icon { background: var(--card); color: var(--text); }
+
+/* ---------- blog sidebar ---------- */
+
+.blog-sidebar {
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+  padding: 18px;
+  border: 1px solid var(--border-soft);
+}
+
+.blog-sidebar h3 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 16px;
+}
+
+.see-all { color: var(--ink); font-size: 11px; }
+
+.blog-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 10px;
+}
+
+.blog-icon { font-size: 20px; }
+.blog-card h4 { font-size: 12px; margin: 0 0 4px; font-weight: 500; }
+.blog-card p { font-size: 10px; color: var(--text-faint); margin: 0; }
+
+/* ---------- library grid (index) ---------- */
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.manga-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+}
+
+.manga-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.manga-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--ink-soft);
+  background: var(--card-hover);
+}
+
+.thumb-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.thumb-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.92);
+}
+
+.rating-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(21, 18, 15, 0.85);
+  border: 1px solid var(--border-soft);
+  color: var(--gold);
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.manga-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.manga-title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* hanko stamp badge */
+.manga-card::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  opacity: 0.85;
+  transform: rotate(-8deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ---------- chapter list inside cards ---------- */
+
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.chapter-btn {
+  background: var(--bg-alt);
+  border: 1px solid var(--border-soft);
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.chapter-btn:hover {
+  background: var(--card-hover);
+  border-color: var(--ink);
+}
+
+.time-ago {
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.badge-new {
+  background: var(--ink);
+  color: var(--text);
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+.badge-end {
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* ---------- see more button ---------- */
+
+.load-more-container {
+  text-align: center;
+  margin: 40px 0 20px;
+}
+
+.btn-see-more {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  padding: 12px 36px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-see-more:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---------- responsive (index) ---------- */
+
+@media (max-width: 1024px) {
+  .hero-section { grid-template-columns: 1fr; }
+  .manga-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .manga-grid { grid-template-columns: repeat(2, 1fr); }
+}
