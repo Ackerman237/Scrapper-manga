@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doujin Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="/doujinPage/css/base.css">
+  <link rel="stylesheet" href="/doujinPage/css/allManga.css">
+</head>
+<body>
+
+  <!-- HEADER / NAVBAR -->
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <a href="/doujinPage/html/index.html">
+          <h1>Doujin Library</h1>
+        </a>
+      </div>
+
+      <nav class="nav-links">
+        <a href="/nekoPage/html/">NEKO VIDEO</a>
+        <a href="/doujinPage/html/index.html">HOME</a>
+        <a href="/doujinPage/html/allManga.html" class="active">ALL</a>
+        <a href="/doujinPage/html/categories.html">CATEGORIES</a>
+        <a href="/doujinPage/html/blog.html">BLOG</a>
+        <a href="/doujinPage/html/admin.html">ADMIN</a>
+      </nav>
+
+      <!-- SEARCH BAR -->
+      <form id="searchForm" class="search-box">
+        <input type="text" id="searchInput" placeholder="Cari judul komik...">
+        <button type="submit">CARI</button>
+      </form>
+    </div>
+  </header>
+
+  <main>
+
+
+    <!-- MANGA LIST SECTION -->
+    <section class="manga-section">
+      <h2 id="sectionTitle" class="section-title">ALL Series</h2>
+
+      <div id="mangaGrid" class="manga-grid">
+        <p class="loading">Memuat manga...</p>
+      </div>
+
+      <!-- TOMBOL SEE MORE -->
+      <div class="pagination">
+        <button id="prevBtn" class="pagination-btn">← PREVIOUS</button>
+
+        <span id="pageIndicator" class="page-indicator">
+            PAGE 1
+        </span>
+
+        <button id="nextBtn" class="pagination-btn">NEXT →</button>
+        </div>
+    </section>
+
+  </main>
+
+  <!-- FLOATING BACK TO TOP BUTTON -->
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+
+  <script src="/doujinPage/js/allManga.js" defer></script>
+</body>
+</html>
