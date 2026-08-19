@@ -377,20 +377,6 @@ async function renderDetail() {
   }
 }
 
-// Contoh implementasi logika tombol Favorite di detail.js
-const favoriteBtn = document.getElementById('favoriteBtn');
-
-function checkFavoriteStatus(slug) {
-  const favorites = JSON.parse(localStorage.getItem("favorites")) || {};
-  if (favorites[slug]) {
-    favoriteBtn.classList.add('is-active');
-    favoriteBtn.innerHTML = '❤️ FAVORITED';
-  } else {
-    favoriteBtn.classList.remove('is-active');
-    favoriteBtn.innerHTML = '❤️ FAVORITE';
-  }
-}
-
 favoriteBtn.addEventListener('click', () => {
   let favorites = JSON.parse(localStorage.getItem("favorites")) || {};
   const slug = mangaData.slug; // Sesuaikan dengan variabel objek manga Anda
