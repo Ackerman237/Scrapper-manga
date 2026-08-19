@@ -74,7 +74,7 @@ function renderHomeHistory() {
 
     // Mengambil cover manga (jika tersimpan di history, atau gunakan placeholder/fallback)
     const thumbUrl = item.thumb || 'https://placehold.co/110x140?text=No+Cover';
-    const formattedDate = item.readAt ? new Date(item.readAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-';
+    const formattedDate = item.lastRead ? new Date(item.lastRead).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-';
 
     card.innerHTML = `
       <img src="${thumbUrl}" alt="${item.title}" class="history-card-thumb" loading="lazy" referrerpolicy="no-referrer">
