@@ -148,8 +148,8 @@ async function renderDetail() {
           const chViews = ch.views ? Number(ch.views).toLocaleString("id-ID") : "-";
 
           const row = document.createElement("a");
-          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/html/reader.html
-          row.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}`;
+          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/reader.html
+          row.href = `/doujinPage/reader.html?id=${encodeURIComponent(chId)}`;
           row.className = "chapter-row" + (idx === 0 ? " is-latest" : "");
           row.innerHTML = `
             <div class="chapter-number">${chNum}</div>
@@ -174,8 +174,8 @@ async function renderDetail() {
         const firstCh = chaptersAsc[0];
         const firstChId = firstCh.id || firstCh.chapter_id || firstCh.number || firstCh.chapter;
         readNowBtn.onclick = () => {
-          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/html/reader.html
-          window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(firstChId)}`;
+          // PERBAIKAN: Jalur eksplisit diarahkan ke /doujinPage/reader.html
+          window.location.href = `/doujinPage/reader.html?id=${encodeURIComponent(firstChId)}`;
         };
       } else {
         readNowBtn.style.display = "none";

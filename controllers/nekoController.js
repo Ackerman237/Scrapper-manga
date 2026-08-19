@@ -65,25 +65,3 @@ export const getNekoCategories = async (_req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
-
-export const proxyNekoPlayer = async (req, res) => {
-  try {
-    const { url } = req.query;
-    if (!url) {
-      return res.status(400).send('Parameter url dibutuhkan');
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        'Referer': 'https://nekopoi.care/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-      }
-    });
-
-    const html = await response.text();
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-};
