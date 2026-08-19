@@ -87,8 +87,8 @@ A primary focus of this project, featuring:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Ackerman237/Scrapper-manga.git
-cd Scrapper-manga
+git clone https://github.com/Ackerman237/Scraper-manga.git
+cd Scraper-manga
 ```
 
 2. Install dependencies:
