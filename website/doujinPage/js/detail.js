@@ -96,6 +96,21 @@ function toggleBookmark(manga) {
   }
 }
 
+// --- FUNGSI HISTORY (LocalStorage) ---
+function getReadingHistory(){
+ return JSON.parse(
+   localStorage.getItem("history")
+ ) || [];
+}
+
+function getLastReadChapter(slug){
+ const history = getReadingHistory();
+ return history.find(
+   item =>
+   item.slug === slug
+ );
+}
+
 // --- FUNGSI RENDER CHAPTER (Support Filter & Sort) ---
 function renderChapterList() {
   const list = el("chapterList");
@@ -290,12 +305,20 @@ async function renderDetail() {
     // ---- Daftar Chapter (Dipanggil via renderChapterList) ----
     renderChapterList();
 
-    // ---- Tombol Read Now -> Navigasi ke Chapter Pertama / Terbaru ----
+    // ---- Tombol Read Now / Continue Chapter ----
     const readNowBtn = el("readNowBtn");
     if (readNowBtn) {
-      if (chaptersAsc.length > 0) {
+      const lastRead = getLastReadChapter(mangaSlug);
+
+      if (lastRead) {
+        readNowBtn.textContent = `▶ CONTINUE CHAPTER ${lastRead.chapter}`;
+        readNowBtn.onclick = () => {
+          window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(lastRead.chapterId)}`;
+        };
+      } else if (chaptersAsc.length > 0) {
         const firstCh = chaptersAsc[0];
         const firstChId = firstCh.id || firstCh.chapter_id || firstCh.number || firstCh.chapter;
+        readNowBtn.textContent = "▶ READ NOW";
         readNowBtn.onclick = () => {
           window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(firstChId)}`;
         };

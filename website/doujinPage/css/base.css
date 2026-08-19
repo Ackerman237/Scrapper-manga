@@ -8,6 +8,11 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
+/* pengaman global anti horizontal-scroll */
+html, body {
+  overflow-x: hidden;
+}
+
 :root {
   --bg: #15120f;
   --bg-alt: #1b1713;
@@ -129,6 +134,7 @@ header h1::after {
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
   overflow: hidden;
+  min-width: 0;
 }
 
 .search-box input {
@@ -139,6 +145,8 @@ header h1::after {
   font-family: var(--font-body);
   font-size: 13px;
   outline: none;
+  min-width: 0;
+  width: 100%;
 }
 
 .search-box button {
@@ -269,7 +277,7 @@ main {
 @media (max-width: 700px) {
   header { padding: 14px 20px; }
   .nav-container { flex-wrap: wrap; gap: 12px; }
-  .brand { flex: 1; }
+  .brand { flex: 1; min-width: 0; }
 
   .nav-hamburger { display: flex; }
 
@@ -291,7 +299,11 @@ main {
     padding: 10px 12px;
   }
 
-  .search-box { order: 2; }
+  .search-box {
+    order: 2;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
 
   main { padding: 20px 14px; }
 }

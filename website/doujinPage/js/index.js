@@ -51,6 +51,83 @@ async function fetchJsonWithTimeout(url) {
   }
 }
 
+// --- FUNGSI RENDER HISTORY DI SIDEBAR (CAROUSEL & AUTOSCROLL) ---
+function renderHomeHistory() {
+  const container = document.getElementById('historyContainer');
+  const wrapper = document.getElementById('historyWrapper');
+  if (!container || !wrapper) return;
+
+  const history = JSON.parse(localStorage.getItem('history')) || [];
+
+  if (history.length === 0) {
+    container.innerHTML = '<p class="error" style="font-size: 13px; color: var(--text-muted, #888); padding: 10px;">Belum ada riwayat membaca.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+
+  // Ambil maksimal 5 riwayat terakhir
+  history.slice(0, 5).forEach(item => {
+    const card = document.createElement('a');
+    card.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(item.slug)}`;
+    card.className = 'history-card';
+
+    // Mengambil cover manga (jika tersimpan di history, atau gunakan placeholder/fallback)
+    const thumbUrl = item.thumb || 'https://placehold.co/110x140?text=No+Cover';
+    const formattedDate = item.readAt ? new Date(item.readAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-';
+
+    card.innerHTML = `
+      <img src="${thumbUrl}" alt="${item.title}" class="history-card-thumb" loading="lazy" referrerpolicy="no-referrer">
+      <div class="history-card-body">
+        <h4 class="history-card-title" title="${item.title}">${item.title}</h4>
+        <div class="history-card-meta">Ch. ${item.chapter}</div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+
+  // --- LOGIKA AUTOSCROLL & MANUAL DRAG/SCROLL ---
+  let autoScrollInterval = null;
+  const scrollSpeed = 1; // Kecepatan geser otomatis (pixel)
+  const scrollIntervalTime = 30; // Interval waktu (milidetik)
+
+  function startAutoScroll() {
+    if (autoScrollInterval) return;
+    autoScrollInterval = setInterval(() => {
+      if (!container) return;
+      
+      // Jika sudah sampai ujung kanan, kembali ke awal (looping)
+      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 2) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        container.scrollLeft += scrollSpeed;
+      }
+    }, scrollIntervalTime);
+  }
+
+  function stopAutoScroll() {
+    if (autoScrollInterval) {
+      clearInterval(autoScrollInterval);
+      autoScrollInterval = null;
+    }
+  }
+
+  // Jalankan autoscroll saat pertama kali dimuat
+  startAutoScroll();
+
+  // Berhenti autoscroll saat kursor diarahkan ke carousel (hover) atau saat disentuh/digeser manual
+  wrapper.addEventListener('mouseenter', stopAutoScroll);
+  wrapper.addEventListener('mouseleave', startAutoScroll);
+  wrapper.addEventListener('touchstart', stopAutoScroll, { passive: true });
+  wrapper.addEventListener('wheel', () => {
+    stopAutoScroll();
+    // Nyalakan kembali setelah beberapa detik user berhenti scroll manual
+    clearTimeout(window.resumeScrollTimer);
+    window.resumeScrollTimer = setTimeout(startAutoScroll, 4000);
+  }, { passive: true });
+}
+
 async function loadManga(query = '', page = 1) {
   const grid = document.getElementById('mangaGrid');
   const sectionTitle = document.getElementById('sectionTitle');
@@ -136,6 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchForm = document.getElementById('searchForm');
   const searchInput = document.getElementById('searchInput');
   const backToTopBtn = document.getElementById('backToTop');
+
+  // Render riwayat membaca di sidebar halaman utama
+  renderHomeHistory();
 
   searchForm?.addEventListener('submit', (e) => {
     e.preventDefault();

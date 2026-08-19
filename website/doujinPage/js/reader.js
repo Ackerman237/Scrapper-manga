@@ -1,5 +1,33 @@
 const REQUEST_TIMEOUT_MS = 12000;
 
+function saveReadingHistory(data) {
+  let history =
+    JSON.parse(
+      localStorage.getItem("history")
+    ) || [];
+
+  const index =
+    history.findIndex(
+      item =>
+      item.slug === data.slug
+    );
+
+  if(index !== -1){
+    history.splice(index,1);
+  }
+
+  history.unshift(data);
+
+  // maksimal 50 riwayat
+  history =
+    history.slice(0,50);
+
+  localStorage.setItem(
+    "history",
+    JSON.stringify(history)
+  );
+}
+
 async function fetchJsonWithTimeout(url) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -577,6 +605,17 @@ const chapters =
         img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
         imageList.appendChild(img);
       });
+
+      // Simpan history setelah chapter berhasil diload dan gambar disiapkan
+      saveReadingHistory({
+        slug: mangaSlug,
+        title: mangaTitle,
+        thumb: chapterData.thumb || mangaDetail?.thumb || mangaDetail?.cover || "",
+        chapter: chapterData.number ?? chapterData.chapter ?? (currentIndex >= 0 ? currentIndex + 1 : 1),
+        chapterId: chapterId,
+        lastRead: new Date().toISOString()
+      });
+
     } else {
       const empty = document.createElement('p');
       empty.className = 'error';
