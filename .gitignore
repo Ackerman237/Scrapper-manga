@@ -134,6 +134,10 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# VSCode workspace (ignore personal settings, keep tasks)
+.vscode/*
+!.vscode/tasks.json
+
 # pnpm
 .pnpm-store
 
