@@ -173,17 +173,38 @@ function renderChapterList() {
       const chViews = ch.views ? Number(ch.views).toLocaleString("id-ID") : "-";
 
       const row = document.createElement("a");
-      row.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}`;
-      row.className = "chapter-row" + (idx === 0 && chapterOrder === 'desc' ? " is-latest" : "");
-      row.innerHTML = `
-        <div class="chapter-number">${chNum}</div>
-        <div class="chapter-row-body">
-          <h4>${chTitle}</h4>
-          <div class="chapter-row-meta">
-            <span class="meta-item">🕒 ${chDate}</span>
-            <span class="meta-item">👁 ${chViews}</span>
-          </div>
-        </div>`;
+        row.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}`;
+        row.className = "chapter-row" + (idx === 0 && chapterOrder === 'desc' ? " is-latest" : "");
+
+        const numberDiv = document.createElement("div");
+        numberDiv.className = "chapter-number";
+        numberDiv.textContent = chNum;
+
+        const bodyDiv = document.createElement("div");
+        bodyDiv.className = "chapter-row-body";
+
+        const title = document.createElement("h4");
+        title.textContent = chTitle;
+
+        const metaDiv = document.createElement("div");
+        metaDiv.className = "chapter-row-meta";
+
+        const dateSpan = document.createElement("span");
+        dateSpan.className = "meta-item";
+        dateSpan.textContent = `🕒 ${chDate}`;
+
+        const viewsSpan = document.createElement("span");
+        viewsSpan.className = "meta-item";
+        viewsSpan.textContent = `👁 ${chViews}`;
+
+        metaDiv.appendChild(dateSpan);
+        metaDiv.appendChild(viewsSpan);
+
+        bodyDiv.appendChild(title);
+        bodyDiv.appendChild(metaDiv);
+
+        row.appendChild(numberDiv);
+        row.appendChild(bodyDiv);
       list.appendChild(row);
     });
   } else {
