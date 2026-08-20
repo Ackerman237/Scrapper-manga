@@ -1,142 +1,11 @@
-// ============================================================
-// detail.js — Mengisi elemen-elemen di detail.html dari API Asli
-// ============================================================
+// detail.js — Manga detail page
 
-// Doujin Library — shared nav toggle (hamburger menu mobile)
-// Load di SEMUA halaman, taruh sebelum script khusus halaman (detail.js, reader.js, dst)
+let currentChapters = [];
+let chapterOrder = 'desc';
+let chapterSearchQuery = '';
+let currentManga = null;
+let globalTitleText = 'Tanpa Judul';
 
-(function () {
-  const hamburger = document.getElementById('navHamburger');
-  const navLinks = document.getElementById('navLinks');
-
-  if (!hamburger || !navLinks) return;
-
-  function closeNav() {
-    navLinks.classList.remove('is-open');
-    hamburger.classList.remove('is-active');
-    hamburger.setAttribute('aria-expanded', 'false');
-  }
-
-  function toggleNav() {
-    const isOpen = navLinks.classList.toggle('is-open');
-    hamburger.classList.toggle('is-active', isOpen);
-    hamburger.setAttribute('aria-expanded', String(isOpen));
-  }
-
-  hamburger.addEventListener('click', toggleNav);
-
-  // tutup otomatis kalau salah satu link diklik
-  navLinks.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', closeNav);
-  });
-
-  // tutup otomatis kalau resize balik ke desktop
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 700) closeNav();
-  });
-})();
-
-const REQUEST_TIMEOUT_MS = 12000;
-let currentChapters = []; // Menyimpan array chapter asli dari API
-let chapterOrder = 'desc'; // State sort default: 'desc' (terbaru di atas)
-let chapterSearchQuery = ''; // State query pencarian chapter
-let currentManga = null; // Variabel global untuk menyimpan data detail manga aktif
-let globalTitleText = 'Tanpa Judul'; // Menyimpan judul global untuk fallback chapter
-
-async function fetchJsonWithTimeout(url) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return await response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-// Fungsi untuk mengambil data detail manga dari backend API
-async function fetchMangaDetail(slug) {
-  const result = await fetchJsonWithTimeout(`/api/manga/detail?slug=${encodeURIComponent(slug)}`);
-
-  if (!result.success) {
-    throw new Error(result.message || 'Gagal memuat detail manga.');
-  }
-
-  return result.data;
-}
-
-// --- FUNGSI BOOKMARK (LocalStorage) ---
-function getBookmarks() {
-  return JSON.parse(
-    localStorage.getItem("bookmarks")
-  ) || {};
-}
-
-function toggleBookmark(manga) {
-  const bookmarks = getBookmarks();
-
-  if (bookmarks[manga.slug]) {
-    delete bookmarks[manga.slug];
-    localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
-    return false;
-  } else {
-    bookmarks[manga.slug] = {
-      title: manga.title,
-      slug: manga.slug,
-      thumb: manga.thumb,
-      rating: manga.rating,
-      savedAt: new Date().toISOString()
-    };
-    localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
-    return true;
-  }
-}
-
-// --- FUNGSI FAVORITE (LocalStorage) ---
-function getFavorites() {
-  return JSON.parse(localStorage.getItem("favorites")) || {};
-}
-
-function toggleFavorite(manga) {
-  const favorites = getFavorites();
-
-  if (favorites[manga.slug]) {
-    delete favorites[manga.slug];
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-    return false;
-  } else {
-    favorites[manga.slug] = {
-      title: manga.title,
-      slug: manga.slug,
-      thumb: manga.thumb,
-      rating: manga.rating,
-      savedAt: new Date().toISOString()
-    };
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-    return true;
-  }
-}
-
-// --- FUNGSI HISTORY (LocalStorage) ---
-function getReadingHistory(){
- return JSON.parse(
-   localStorage.getItem("history")
- ) || [];
-}
-
-function getLastReadChapter(slug){
- const history = getReadingHistory();
- return history.find(
-   item =>
-   item.slug === slug
- );
-}
-
-// --- FUNGSI RENDER CHAPTER (Support Filter & Sort) ---
 function renderChapterList() {
   const list = el("chapterList");
   const countEl = el("chapterCount");
@@ -144,7 +13,6 @@ function renderChapterList() {
 
   list.innerHTML = "";
 
-  // 1. Filter berdasarkan input pencarian chapter
   let filtered = currentChapters.filter(ch => {
     const chNum = String(ch.number || ch.chapter || '');
     const chTitle = String(ch.title || '').toLowerCase();
@@ -152,7 +20,6 @@ function renderChapterList() {
     return chNum.includes(query) || chTitle.includes(query);
   });
 
-  // 2. Sort berdasarkan state (asc / desc)
   filtered.sort((a, b) => {
     const an = Number(a.number || a.chapter || 0);
     const bn = Number(b.number || b.chapter || 0);
@@ -173,38 +40,36 @@ function renderChapterList() {
       const chViews = ch.views ? Number(ch.views).toLocaleString("id-ID") : "-";
 
       const row = document.createElement("a");
-        row.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}`;
-        row.className = "chapter-row" + (idx === 0 && chapterOrder === 'desc' ? " is-latest" : "");
+      row.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}`;
+      row.className = "chapter-row" + (idx === 0 && chapterOrder === 'desc' ? " is-latest" : "");
 
-        const numberDiv = document.createElement("div");
-        numberDiv.className = "chapter-number";
-        numberDiv.textContent = chNum;
+      const numberDiv = document.createElement("div");
+      numberDiv.className = "chapter-number";
+      numberDiv.textContent = chNum;
 
-        const bodyDiv = document.createElement("div");
-        bodyDiv.className = "chapter-row-body";
+      const bodyDiv = document.createElement("div");
+      bodyDiv.className = "chapter-row-body";
 
-        const title = document.createElement("h4");
-        title.textContent = chTitle;
+      const title = document.createElement("h4");
+      title.textContent = chTitle;
 
-        const metaDiv = document.createElement("div");
-        metaDiv.className = "chapter-row-meta";
+      const metaDiv = document.createElement("div");
+      metaDiv.className = "chapter-row-meta";
 
-        const dateSpan = document.createElement("span");
-        dateSpan.className = "meta-item";
-        dateSpan.textContent = `🕒 ${chDate}`;
+      const dateSpan = document.createElement("span");
+      dateSpan.className = "meta-item";
+      dateSpan.textContent = `🕒 ${chDate}`;
 
-        const viewsSpan = document.createElement("span");
-        viewsSpan.className = "meta-item";
-        viewsSpan.textContent = `👁 ${chViews}`;
+      const viewsSpan = document.createElement("span");
+      viewsSpan.className = "meta-item";
+      viewsSpan.textContent = `👁 ${chViews}`;
 
-        metaDiv.appendChild(dateSpan);
-        metaDiv.appendChild(viewsSpan);
-
-        bodyDiv.appendChild(title);
-        bodyDiv.appendChild(metaDiv);
-
-        row.appendChild(numberDiv);
-        row.appendChild(bodyDiv);
+      metaDiv.appendChild(dateSpan);
+      metaDiv.appendChild(viewsSpan);
+      bodyDiv.appendChild(title);
+      bodyDiv.appendChild(metaDiv);
+      row.appendChild(numberDiv);
+      row.appendChild(bodyDiv);
       list.appendChild(row);
     });
   } else {
@@ -214,17 +79,12 @@ function renderChapterList() {
 
 function starString(rating) {
   const score = parseFloat(rating) || 0;
-  const full = Math.round(score / 2); // Konversi rating 0-10 ke 0-5 bintang
+  const full = Math.round(score / 2);
   return "★".repeat(Math.min(5, Math.max(0, full))) + "☆".repeat(Math.max(0, 5 - full));
-}
-
-function el(id) {
-  return document.getElementById(id);
 }
 
 async function renderDetail() {
   const params = new URLSearchParams(window.location.search);
-  // Mendukung parameter 'slug' atau fallback ke 'id'
   const slug = params.get("slug") || params.get("id");
 
   if (!slug) {
@@ -239,7 +99,6 @@ async function renderDetail() {
   try {
     const data = await fetchMangaDetail(slug);
 
-    // Normalisasi data objek untuk disimpan ke variabel global
     const coverUrl = data.cover || data.thumb || data.coverUrl || "https://placehold.co/420x560?text=No+Cover";
     const titleText = data.title || "Tanpa Judul";
     globalTitleText = titleText;
@@ -253,7 +112,6 @@ async function renderDetail() {
       rating: numRating
     };
 
-    // Sinkronisasi status tombol bookmark saat data berhasil dimuat
     const bookmarkBtn = el("bookmarkBtn");
     if (bookmarkBtn) {
       const bookmarks = getBookmarks();
@@ -261,7 +119,6 @@ async function renderDetail() {
       bookmarkBtn.textContent = isBookmarked ? "✅ BOOKMARKED" : "🔖 BOOKMARK";
     }
 
-    // Sinkronisasi status tombol favorite saat data berhasil dimuat
     const favoriteBtn = el("favoriteBtn");
     if (favoriteBtn) {
       const favorites = getFavorites();
@@ -284,8 +141,7 @@ async function renderDetail() {
     const statusText = data.status || "Ongoing";
     const typeText = data.type || "Manga";
     const typeFlagText = data.typeFlag || "??";
-    
-    // Set data chapter ke state global
+
     currentChapters = Array.isArray(data.chapters) ? data.chapters : [];
     chapterOrder = 'desc';
     chapterSearchQuery = '';
@@ -297,21 +153,15 @@ async function renderDetail() {
       return 0;
     });
 
-    // ---- Cover ----
     if (el("coverFrame")) el("coverFrame").style.backgroundImage = `url('${coverUrl}')`;
-    if (el("coverImg")) {
-      el("coverImg").src = coverUrl;
-      el("coverImg").alt = titleText;
-    }
+    if (el("coverImg")) { el("coverImg").src = coverUrl; el("coverImg").alt = titleText; }
 
-    // ---- Judul & Badge ----
     if (el("mTitle")) el("mTitle").textContent = titleText;
     if (el("mAltTitlesShort")) el("mAltTitlesShort").textContent = altShort;
     if (el("mTypeFlag")) el("mTypeFlag").textContent = typeFlagText;
     if (el("mTypeText")) el("mTypeText").textContent = typeText;
     if (el("mStatusText")) el("mStatusText").textContent = statusText;
 
-    // ---- Panel Series Information ----
     if (el("infoTypeFlag")) el("infoTypeFlag").textContent = typeFlagText;
     if (el("infoType")) el("infoType").textContent = typeText;
     if (el("infoStatus")) el("infoStatus").textContent = statusText;
@@ -322,7 +172,6 @@ async function renderDetail() {
     if (el("infoSerialization")) el("infoSerialization").textContent = serializationText;
     if (el("infoCharacters")) el("infoCharacters").textContent = charactersText;
 
-    // Genre Tags
     const genreWrap = el("genreTags");
     if (genreWrap) {
       genreWrap.innerHTML = "";
@@ -338,32 +187,21 @@ async function renderDetail() {
       }
     }
 
-    // ---- Rating Box ----
     if (el("ratingScore")) el("ratingScore").textContent = numRating ? numRating.toFixed(1) : "-";
     if (el("ratingStars")) el("ratingStars").textContent = starString(numRating);
     if (el("viewsValue")) {
       el("viewsValue").textContent = data.views ? Number(data.views).toLocaleString("id-ID") : "-";
     }
 
-    // ---- Synopsis ----
     if (el("synopsisText")) {
-      el("synopsisText").textContent =
-        cleanSynopsis(
-          data.synopsis ||
-          data.summary ||
-          data.description ||
-          ''
-        );
+      el("synopsisText").textContent = cleanSynopsis(data.synopsis || data.summary || data.description || '');
     }
 
-    // ---- Daftar Chapter (Dipanggil via renderChapterList) ----
     renderChapterList();
 
-    // ---- Tombol Read Now / Continue Chapter ----
     const readNowBtn = el("readNowBtn");
     if (readNowBtn) {
       const lastRead = getLastReadChapter(mangaSlug);
-
       if (lastRead) {
         readNowBtn.textContent = `▶ CONTINUE CHAPTER ${lastRead.chapter}`;
         readNowBtn.onclick = () => {
@@ -381,7 +219,6 @@ async function renderDetail() {
       }
     }
 
-    // ---- Tampilkan Layout, Sembunyikan Loading ----
     if (el("detailLoading")) el("detailLoading").style.display = "none";
     if (el("detailLayout")) el("detailLayout").style.display = "grid";
 
@@ -389,20 +226,35 @@ async function renderDetail() {
     console.error(err);
     if (el("detailLoading")) el("detailLoading").style.display = "none";
     if (el("detailError")) {
-      el("detailError").textContent =
-        err?.name === 'AbortError'
-          ? "Request terlalu lama. Coba lagi sebentar."
-          : err.message || "Gagal memuat detail manga.";
+      const msg = err?.name === 'AbortError'
+        ? "Request terlalu lama. Coba lagi sebentar."
+        : err?.message === 'HTTP 404'
+          ? "Manga tidak ditemukan."
+          : "Gagal memuat detail manga.";
+      el("detailError").textContent = msg;
       el("detailError").style.display = "block";
+
+      // tambah retry button
+      const retryBtn = document.createElement('button');
+      retryBtn.type = 'button';
+      retryBtn.className = 'retry-btn';
+      retryBtn.textContent = 'COBA LAGI';
+      retryBtn.style.display = 'block';
+      retryBtn.style.margin = '16px auto 0';
+      retryBtn.addEventListener('click', () => {
+        el("detailError").style.display = "none";
+        el("detailLoading").style.display = "block";
+        retryBtn.remove();
+        renderDetail();
+      });
+      el("detailError").after(retryBtn);
     }
   }
 }
 
-// Handler event UI
 document.addEventListener("DOMContentLoaded", () => {
   renderDetail();
 
-  // Event Listener Tombol Bookmark
   const bookmarkBtn = el("bookmarkBtn");
   if (bookmarkBtn) {
     bookmarkBtn.addEventListener("click", () => {
@@ -412,7 +264,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Event Listener Tombol Favorite
   const favoriteBtn = el("favoriteBtn");
   if (favoriteBtn) {
     favoriteBtn.addEventListener("click", () => {
@@ -422,7 +273,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Event Search Chapter (Live filter)
   const chapterSearchInput = el("chapterSearch");
   if (chapterSearchInput) {
     chapterSearchInput.addEventListener("input", (e) => {
@@ -431,7 +281,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Event Sort Button (Toggle ASC / DESC)
   const chapterSortBtn = el("chapterSortBtn");
   if (chapterSortBtn) {
     chapterSortBtn.addEventListener("click", () => {
@@ -444,8 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
   el("altTitlesToggle")?.addEventListener("click", () => {
     const target = el("mAltTitlesShort");
     if (target) {
-      target.style.webkitLineClamp =
-        target.style.webkitLineClamp === "unset" ? "1" : "unset";
+      target.style.webkitLineClamp = target.style.webkitLineClamp === "unset" ? "1" : "unset";
     }
   });
 
@@ -462,69 +310,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Back to Top
-  const backToTop = el("backToTop");
-  if (backToTop) {
-    window.addEventListener("scroll", () => {
-      backToTop.classList.toggle("show", window.scrollY > 400);
-    });
-    backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-  }
+  setupBackToTop(el("backToTop"), 400);
 });
 
 function cleanSynopsis(raw) {
-  if (!raw || typeof raw !== 'string') {
-    return 'Tidak ada sinopsis.';
-  }
+  if (!raw || typeof raw !== 'string') return 'Tidak ada sinopsis.';
 
   const parser = new DOMParser();
-  const doc = parser.parseFromString(
-    raw,
-    'text/html'
-  );
+  const doc = parser.parseFromString(raw, 'text/html');
 
-  doc.querySelectorAll(
-    'script, style, img'
-  ).forEach(el => el.remove());
+  doc.querySelectorAll('script, style, img').forEach(el => el.remove());
 
-  const paragraphs =
-    Array.from(
-      doc.querySelectorAll('p')
-    );
-
+  const paragraphs = Array.from(doc.querySelectorAll('p'));
   const parts = [];
 
   for (const paragraph of paragraphs) {
-    const text =
-      paragraph.textContent
-        .replace(/\s+/g, ' ')
-        .trim();
-
+    const text = paragraph.textContent.replace(/\s+/g, ' ').trim();
     if (!text) continue;
-
-    if (
-      /download\s*batch/i.test(text)
-    ) {
-      break;
-    }
-
+    if (/download\s*batch/i.test(text)) break;
     parts.push(text);
   }
 
   if (parts.length === 0) {
-    const text =
-      doc.body.textContent
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    const cleaned =
-      text.split(
-        /download\s*batch/i
-      )[0]
-      .trim();
-
-    return cleaned ||
-      'Tidak ada sinopsis.';
+    const text = doc.body.textContent.replace(/\s+/g, ' ').trim();
+    const cleaned = text.split(/download\s*batch/i)[0].trim();
+    return cleaned || 'Tidak ada sinopsis.';
   }
 
   return parts.join('\n\n');

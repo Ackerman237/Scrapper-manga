@@ -33,6 +33,12 @@ html, body {
   --font-body: 'Inter', sans-serif;
 
   --radius: 4px;
+  --radius-lg: 10px;
+
+  --primary: #c1443a;
+  --primary-hover: #7a2c26;
+  --primary-foreground: #ece6dc;
+  --favorite: #e53e3e;
 }
 
 * {
@@ -233,6 +239,53 @@ main {
 
 .error {
   color: #d9756c;
+}
+
+.state-box {
+  grid-column: 1 / -1;
+  width: 100%;
+  text-align: center;
+  padding: 50px 20px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.state-box .error {
+  padding: 0 0 16px;
+}
+
+.state-box.empty-state {
+  color: var(--text-faint);
+}
+
+.retry-btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 9px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  transform: translateY(-2px);
+}
+
+.retry-btn:active {
+  transform: translateY(0);
 }
 
 /* ---------- hamburger (mobile nav toggle) ---------- */

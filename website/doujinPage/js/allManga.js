@@ -36,7 +36,7 @@ async function loadManga(query = '', page = 1, sort = 'newest', genre = '') {
 
   if (!grid) return;
 
-  grid.innerHTML = '<p class="loading">Memuat manga...</p>';
+  showLoading(grid, 'Memuat manga...');
 
   try {
     let endpoint = `/api/manga?page=${page}&limit=${currentLimit}`;
@@ -66,33 +66,15 @@ async function loadManga(query = '', page = 1, sort = 'newest', genre = '') {
           ? `Tidak ada manga untuk genre ini.`
           : 'Manga tidak ditemukan.';
 
-      grid.innerHTML = `
-        <div class="empty-state">
-          <p>${emptyMessage}</p>
-          ${
-            query
-              ? '<button id="clearSearchBtn" class="retry-btn">LIHAT SEMUA MANGA</button>'
-              : page > 1
-                ? '<button id="backPreviousPage" class="retry-btn">← KEMBALI KE HALAMAN SEBELUMNYA</button>'
-                : ''
-          }
-        </div>
-      `;
+      const btnLabel = query ? 'LIHAT SEMUA MANGA' : page > 1 ? '← KEMBALI KE HALAMAN SEBELUMNYA' : null;
+      const btnAction = query
+        ? () => { window.location.href = '/doujinPage/html/allManga.html?page=1'; }
+        : page > 1
+          ? () => goToPage(page - 1)
+          : null;
 
+      showEmpty(grid, emptyMessage, btnLabel, btnAction);
       renderPagination({ page, totalPages: 1, hasPrevious: page > 1, hasNext: false });
-
-      const clearSearchBtn = document.getElementById('clearSearchBtn');
-      if (clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', () => {
-          window.location.href = '/doujinPage/html/allManga.html?page=1';
-        });
-      }
-
-      const backPreviousPage = document.getElementById('backPreviousPage');
-      if (backPreviousPage) {
-        backPreviousPage.addEventListener('click', () => goToPage(page - 1));
-      }
-
       return;
     }
 
@@ -112,7 +94,7 @@ async function loadManga(query = '', page = 1, sort = 'newest', genre = '') {
 
   } catch (error) {
     console.error('Fetch Error:', error);
-    grid.innerHTML = `<p class="error">${formatFetchError(error, 'Gagal mengambil data manga.')}</p>`;
+    showError(grid, formatFetchError(error, 'Gagal mengambil data manga.'), () => loadManga(query, page, sort, genre));
   }
 }
 
