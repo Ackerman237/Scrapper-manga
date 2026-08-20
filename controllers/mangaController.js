@@ -159,12 +159,22 @@ export const proxyImage = async (req, res) => {
     }, 12000);
 
     const response = await fetch(safeUrl, {
+      // redirect: 'manual', 
+      // Nanti harus diaktifkan jika ingin menolak redirect,
+      //  tapi untuk sementara biarkan dulu, harus konfihurasi gambar di index,detail,allManga, 
+      // karena beberapa gambar di doujin.desu.xxx mengarah ke redirect, jadi harus diizinkan dulu
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
         'Referer': 'https://doujin.desu.xxx'
       }
     });
+    if (response.status >= 300 && response.status < 400) {
+      return res.status(400).json({
+        success: false,
+        message: 'Redirect gambar tidak diizinkan'
+      });
+    }
     clearTimeout(timeout);
 
     if (!response.ok) {

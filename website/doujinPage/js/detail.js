@@ -377,26 +377,6 @@ async function renderDetail() {
   }
 }
 
-favoriteBtn.addEventListener('click', () => {
-  let favorites = JSON.parse(localStorage.getItem("favorites")) || {};
-  const slug = mangaData.slug; // Sesuaikan dengan variabel objek manga Anda
-
-  if (favorites[slug]) {
-    delete favorites[slug];
-  } else {
-    favorites[slug] = {
-      slug: mangaData.slug,
-      title: mangaData.title,
-      thumb: mangaData.thumb,
-      rating: mangaData.rating,
-      savedAt: new Date().toISOString()
-    };
-  }
-
-  localStorage.setItem("favorites", JSON.stringify(favorites));
-  checkFavoriteStatus(slug);
-});
-
 // Handler event UI
 document.addEventListener("DOMContentLoaded", () => {
   renderDetail();
