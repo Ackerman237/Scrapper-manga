@@ -153,3 +153,6 @@ vite.config.ts.timestamp-*
 
 # Kiro AI
 kiro-cli.exe
+
+# SQLite database
+data/

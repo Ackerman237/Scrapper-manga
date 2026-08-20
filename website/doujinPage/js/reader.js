@@ -1,110 +1,4 @@
-const REQUEST_TIMEOUT_MS = 12000;
-
-function saveReadingHistory(data) {
-  let history =
-    JSON.parse(
-      localStorage.getItem("history")
-    ) || [];
-
-  const index =
-    history.findIndex(
-      item =>
-      item.slug === data.slug
-    );
-
-  if(index !== -1){
-    history.splice(index,1);
-  }
-
-  history.unshift(data);
-
-  // maksimal 50 riwayat
-  history =
-    history.slice(0,10);
-
-  localStorage.setItem(
-    "history",
-    JSON.stringify(history)
-  );
-}
-
-function saveReadingPosition(data) {
-
-  localStorage.setItem(
-    "readingPosition",
-    JSON.stringify({
-      slug: data.slug,
-      chapterId: data.chapterId,
-      page: data.page,
-      updatedAt: new Date().toISOString()
-    })
-  );
-
-}
-
-function restoreReadingPosition(imageList, slug, chapterId) {
-
-  const saved =
-    JSON.parse(
-      localStorage.getItem("readingPosition")
-    );
-
-  if (!saved) return;
-
-  if (
-    saved.slug !== slug ||
-    saved.chapterId !== chapterId
-  ) {
-    return;
-  }
-
-  const pages =
-    imageList.querySelectorAll("img");
-
-  const target =
-    pages[saved.page - 1];
-
-  if (!target) return;
-
-  setTimeout(() => {
-    target.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-  }, 3000);
-
-}
-
-async function fetchJsonWithTimeout(url) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return await response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function fetchChapter(chapterId) {
-  const result = await fetchJsonWithTimeout(`/api/chapter?id=${encodeURIComponent(chapterId)}`);
-  if (!result.success) throw new Error(result.message || 'Gagal memuat chapter.');
-  return result.data;
-}
-
-async function fetchMangaDetail(slug) {
-  const result = await fetchJsonWithTimeout(`/api/manga/detail?slug=${encodeURIComponent(slug)}`);
-  if (!result.success) throw new Error(result.message || 'Gagal memuat detail manga.');
-  return result.data;
-}
-
-function el(id) {
-  return document.getElementById(id);
-}
+// reader.js — Chapter reader with immersive chrome
 
 function getChapterId(chapter) {
   return chapter?.id ?? chapter?.chapter_id ?? '';
@@ -153,12 +47,8 @@ function preloadNextImages(container, count = 2) {
     const src = img.dataset.src;
     if (!src) return;
     const preload = new Image();
-    preload.onload = () => {
-      console.log("Preloaded:", src);
-    };
-    preload.onerror = () => {
-      console.warn("Preload gagal:", src);
-    };
+    preload.onload = () => console.log("Preloaded:", src);
+    preload.onerror = () => console.warn("Preload gagal:", src);
     preload.src = src;
   });
 }
@@ -167,64 +57,56 @@ function setupReadingProgress(imageList, totalPages, readingData) {
   const progress = document.createElement('div');
   progress.className = 'reader-progress';
   progress.textContent = `Page 0 / ${totalPages}`;
-
   document.body.appendChild(progress);
-  let hideTimer;
-    function showProgress() {
-      progress.classList.add("show");
-      clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => {
-        progress.classList.remove("show");
-      }, 500);
-    }
 
-    window.addEventListener("scroll", showProgress, { passive: true });
+  let hideTimer;
+  function showProgress() {
+    progress.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => progress.classList.remove("show"), 500);
+  }
+
+  window.addEventListener("scroll", showProgress, { passive: true });
 
   const pages = Array.from(imageList.querySelectorAll('img'));
+
+  // debounce server save — kirim paling cepat setiap 3 detik
+  let saveTimer = null;
+  function scheduleSave(page) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const data = { ...readingData, page };
+      saveReadingPosition(data);
+      saveProgressToServer(data);
+    }, 3000);
+  }
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-
       const index = pages.indexOf(entry.target);
-
       if (index >= 0) {
-        progress.textContent = `Page ${index + 1} / ${totalPages}`;
-      }
-
-      if (index >= 0) {
-      const page = index + 1;
+        const page = index + 1;
         progress.textContent = `Page ${page} / ${totalPages}`;
-        saveReadingPosition({
-          ...readingData,
-          page
-        });
+        scheduleSave(page);
       }
-
     });
-  }, {
-    threshold: 0.5
-  });
+  }, { threshold: 0.5 });
 
   pages.forEach(img => observer.observe(img));
-
   return progress;
 }
 
 function observeChapterEnd(endSentinel, onReachEnd) {
   if (!endSentinel || !('IntersectionObserver' in window)) return null;
   const observer = new IntersectionObserver((entries) => {
-    if (entries.some((entry) => entry.isIntersecting)) {
-      onReachEnd();
-    }
+    if (entries.some((entry) => entry.isIntersecting)) onReachEnd();
   }, { rootMargin: '0px 0px 120px 0px', threshold: 0.1 });
   observer.observe(endSentinel);
   return observer;
 }
 
-/* ---------------------------------------------------------
-   SITE CHROME INTEGRATION (shared header + existing backToTop btn)
-   --------------------------------------------------------- */
+// Chrome integration
 
 function syncSiteHeaderHeight() {
   const header = document.querySelector('header');
@@ -236,7 +118,7 @@ function markReaderShell() {
   document.querySelector('main.container')?.classList.add('reader-shell');
 }
 
-function setupBackToTop() {
+function setupBackToTopBtn() {
   const btn = el('backToTop');
   if (!btn) return;
   const sync = () => btn.classList.toggle('show', window.scrollY > 400);
@@ -245,9 +127,7 @@ function setupBackToTop() {
   sync();
 }
 
-/* ---------------------------------------------------------
-   CHROME: top bar + bottom bar + side controls, tap-to-toggle
-   --------------------------------------------------------- */
+// Chrome builders
 
 function makeIconButton({ label, text, className, disabled = false, onClick }) {
   const button = document.createElement('button');
@@ -370,18 +250,14 @@ function buildSideControls() {
     label: 'Scroll ke atas',
     text: '▲',
     className: 'reader-side-btn',
-    onClick: () => {
-      window.scrollBy({ top: -Math.round(window.innerHeight * 0.8), behavior: 'smooth' });
-    },
+    onClick: () => window.scrollBy({ top: -Math.round(window.innerHeight * 0.8), behavior: 'smooth' }),
   });
 
   const downBtn = makeIconButton({
     label: 'Scroll ke bawah',
     text: '▼',
     className: 'reader-side-btn',
-    onClick: () => {
-      window.scrollBy({ top: Math.round(window.innerHeight * 0.8), behavior: 'smooth' });
-    },
+    onClick: () => window.scrollBy({ top: Math.round(window.innerHeight * 0.8), behavior: 'smooth' }),
   });
 
   wrap.append(upBtn, downBtn);
@@ -516,21 +392,9 @@ function setupChromeToggle({ topbar, bottombar, sideControls, tapTarget }) {
     });
   }
 
-  function toggle() {
-    visible = !visible;
-    applyVisibility();
-  }
-
-  function show() {
-    visible = true;
-    applyVisibility();
-  }
-
-  function hide() {
-    if (!visible) return;
-    visible = false;
-    applyVisibility();
-  }
+  function toggle() { visible = !visible; applyVisibility(); }
+  function show() { visible = true; applyVisibility(); }
+  function hide() { if (!visible) return; visible = false; applyVisibility(); }
 
   if (tapTarget) {
     tapTarget.addEventListener('click', (event) => {
@@ -564,19 +428,13 @@ function setupOverlayPanels({ drawer, drawerClose, settingsPanel, settingsClose,
   }
 
   menuBtn.addEventListener('click', () => {
-    if (drawer.classList.contains('is-open')) {
-      closeAll();
-    } else {
-      openDrawer();
-    }
+    if (drawer.classList.contains('is-open')) closeAll();
+    else openDrawer();
   });
 
   settingsBtn.addEventListener('click', () => {
-    if (settingsPanel.classList.contains('is-open')) {
-      closeAll();
-    } else {
-      openSettings();
-    }
+    if (settingsPanel.classList.contains('is-open')) closeAll();
+    else openSettings();
   });
 
   drawerClose.addEventListener('click', closeAll);
@@ -584,9 +442,7 @@ function setupOverlayPanels({ drawer, drawerClose, settingsPanel, settingsClose,
   backdrop.addEventListener('click', closeAll);
 }
 
-/* ---------------------------------------------------------
-   AUTO-SCROLL
-   --------------------------------------------------------- */
+// Auto-scroll
 
 function createAutoScroller(getSpeedValue) {
   let active = false;
@@ -597,40 +453,24 @@ function createAutoScroller(getSpeedValue) {
     const speed = 0.6 + Number(getSpeedValue() || 4) * 0.35;
     window.scrollBy(0, speed);
     const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-    if (atBottom) {
-      stop();
-      return;
-    }
+    if (atBottom) { stop(); return; }
     rafId = requestAnimationFrame(step);
   }
 
-  function start() {
-    active = true;
-    step();
-  }
-
-  function stop() {
-    active = false;
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = null;
-  }
-
-  function isActive() {
-    return active;
-  }
+  function start() { active = true; step(); }
+  function stop() { active = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; }
+  function isActive() { return active; }
 
   return { start, stop, isActive };
 }
 
-/* ---------------------------------------------------------
-   MAIN
-   --------------------------------------------------------- */
+// Main
 
 async function loadChapter() {
   markReaderShell();
   syncSiteHeaderHeight();
   window.addEventListener('resize', syncSiteHeaderHeight);
-  setupBackToTop();
+  setupBackToTopBtn();
 
   const container = el('reader');
   const headerInfo = el('info');
@@ -653,39 +493,18 @@ async function loadChapter() {
 
     let mangaDetail = null;
     if (mangaSlug) {
-      try {
-        mangaDetail = await fetchMangaDetail(mangaSlug);
-      } catch {
-        mangaDetail = null;
-      }
+      try { mangaDetail = await fetchMangaDetail(mangaSlug); }
+      catch { mangaDetail = null; }
     }
 
     const mangaTitle = chapterData.mangaTitle || chapterData.manga_title || mangaDetail?.title || 'Manga';
-    const chaptersRaw =
-  Array.isArray(mangaDetail?.chapters)
-    ? mangaDetail.chapters
-    : [];
-
-const chapters =
-  [...chaptersRaw].sort(
-    (a, b) => {
-      const aNum =
-        Number(
-          a.number ??
-          a.chapter ??
-          0
-        );
-
-      const bNum =
-        Number(
-          b.number ??
-          b.chapter ??
-          0
-        );
-
+    const chaptersRaw = Array.isArray(mangaDetail?.chapters) ? mangaDetail.chapters : [];
+    const chapters = [...chaptersRaw].sort((a, b) => {
+      const aNum = Number(a.number ?? a.chapter ?? 0);
+      const bNum = Number(b.number ?? b.chapter ?? 0);
       return aNum - bNum;
-    }
-  );
+    });
+
     const currentIndex = getCurrentChapterIndex(chapters, chapterId);
     const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     const nextChapter = currentIndex >= 0 && currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
@@ -694,12 +513,10 @@ const chapters =
 
     document.title = `${chapterLabelText} - ${mangaTitle}`;
 
-    // ---- top bar ----
     headerInfo.innerHTML = '';
     const topBar = buildTopBar({ mangaTitle, chapterLabelText, mangaSlug });
     headerInfo.appendChild(topBar);
 
-    // ---- reading strip ----
     container.className = 'reader';
     container.innerHTML = '';
 
@@ -709,8 +526,7 @@ const chapters =
     if (imageUrls.length > 0) {
       imageUrls.forEach((imgUrl, index) => {
         const img = document.createElement('img');
-        const imageUrl =
-          `/api/image-proxy?url=${encodeURIComponent(imgUrl)}&chapterId=${encodeURIComponent(chapterId)}`;
+        const imageUrl = `/api/image-proxy?url=${encodeURIComponent(imgUrl)}&chapterId=${encodeURIComponent(chapterId)}`;
         img.alt = `Halaman ${index + 1}`;
         img.loading = 'lazy';
         img.decoding = 'async';
@@ -734,8 +550,7 @@ const chapters =
               Coba Lagi
             </button>
           `;
-          const retryBtn =
-            errorBox.querySelector('button');
+          const retryBtn = errorBox.querySelector('button');
           retryBtn.addEventListener('click', () => {
             errorBox.replaceWith(img);
             img.src = imageUrl;
@@ -745,7 +560,6 @@ const chapters =
         imageList.appendChild(img);
       });
 
-      // Simpan history setelah chapter berhasil diload dan gambar disiapkan
       saveReadingHistory({
         slug: mangaSlug,
         title: mangaTitle,
@@ -767,21 +581,25 @@ const chapters =
     imageList.appendChild(endSentinel);
 
     container.appendChild(imageList);
-      setupLazyImages(imageList);
-      preloadNextImages(imageList);
-      setupReadingProgress(
-        imageList,
-        imageUrls.length,
-        {
-          slug: mangaSlug,
-          chapterId: chapterId
-        }
-      );
-      restoreReadingPosition(
-        imageList,
-        mangaSlug,
-        chapterId
-      );
+    setupLazyImages(imageList);
+    preloadNextImages(imageList);
+
+    const chapterNum = chapterData.number ?? chapterData.chapter ?? null;
+    setupReadingProgress(imageList, imageUrls.length, {
+      slug: mangaSlug,
+      chapterId: chapterId,
+      chapterNum: chapterNum,
+    });
+
+    // Restore posisi: coba server dulu, fallback localStorage
+    const serverPos = mangaSlug ? await fetchProgressFromServer(mangaSlug) : null;
+    if (serverPos && serverPos.chapter_id === chapterId && serverPos.page > 1) {
+      const pages = imageList.querySelectorAll('img');
+      const target = pages[serverPos.page - 1];
+      if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 1500);
+    } else {
+      restoreReadingPosition(imageList, mangaSlug, chapterId);
+    }
 
     const goNext = () => {
       if (!nextChapter) return;
@@ -800,11 +618,9 @@ const chapters =
     }
     container.appendChild(goNextBtn);
 
-    // ---- side controls ----
     const sideControls = buildSideControls();
     container.appendChild(sideControls);
 
-    // ---- overlay panels (drawer + settings) ----
     const { drawer, closeBtn: drawerClose } = buildChapterDrawer({ chapters, currentChapterId: chapterId });
     const { panel: settingsPanel, closeBtn: settingsClose, speedInput } = buildSettingsPanel({ imageList });
 
@@ -813,7 +629,6 @@ const chapters =
 
     container.append(drawer, settingsPanel, backdrop);
 
-    // ---- auto-scroll ----
     const autoScroller = createAutoScroller(() => speedInput.value);
 
     function togglePlay(playBtn) {
@@ -830,7 +645,6 @@ const chapters =
       }
     }
 
-    // ---- bottom bar ----
     let chromeApi;
     const bottomBar = buildBottomBar({
       prevChapter,
@@ -855,7 +669,6 @@ const chapters =
       showChrome: () => chromeApi?.show(),
     });
 
-    // ---- tap-to-toggle chrome ----
     chromeApi = setupChromeToggle({
       topbar: topBar,
       bottombar: bottomBar,
@@ -863,8 +676,6 @@ const chapters =
       tapTarget: imageList,
     });
 
-    // scroll (manual OR auto-scroll, since auto-scroll also fires 'scroll') hides the chrome;
-    // tapping the page toggles it back on
     let scrollHideRaf = null;
     window.addEventListener('scroll', () => {
       if (window.scrollY <= 10) return;
@@ -875,7 +686,6 @@ const chapters =
       });
     }, { passive: true });
 
-    // stop auto-scroll if user scrolls manually near the top area or taps chrome
     imageList.addEventListener('click', () => {
       if (autoScroller.isActive()) {
         autoScroller.stop();
@@ -889,10 +699,7 @@ const chapters =
   } catch (err) {
     console.error(err);
     container.className = 'error';
-    container.textContent =
-      err?.name === 'AbortError'
-        ? 'Request terlalu lama. Coba lagi sebentar.'
-        : 'Gagal memuat gambar chapter.';
+    container.textContent = formatFetchError(err, 'Gagal memuat gambar chapter.');
   }
 }
 

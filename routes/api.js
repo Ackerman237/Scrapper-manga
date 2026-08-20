@@ -15,6 +15,11 @@ import {
   getNekoCategories,
   proxyNekoPlayer 
 } from '../controllers/nekoController.js';
+import {
+  getReadingPosition,
+  getAllReadingPositions,
+  saveReadingPositionHandler,
+} from '../controllers/progressController.js';
 
 const router = Router();
 
@@ -28,6 +33,9 @@ router.get('/neko/categories', generalLimiter, getNekoCategories);
 router.get('/neko/category', generalLimiter, getNekoCategory);
 router.get('/neko/search', generalLimiter, getNekoSearch);
 router.get('/neko/detail', generalLimiter, getNekoDetail);
-router.get('/neko/proxy-player', proxyLimiter, proxyNekoPlayer); 
+router.get('/neko/proxy-player', proxyLimiter, proxyNekoPlayer);
+router.get('/progress', generalLimiter, getReadingPosition);
+router.get('/progress/all', generalLimiter, getAllReadingPositions);
+router.post('/progress', generalLimiter, saveReadingPositionHandler);
 
 export default router;
