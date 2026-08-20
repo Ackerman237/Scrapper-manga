@@ -33,6 +33,10 @@ app.use(
 app.use('/api', apiRoutes);
 
 // 4. Jalankan Server
-app.listen(PORT, () => {
-  logger.info({ port: PORT }, `Server berjalan di http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    logger.info({ port: PORT }, `Server berjalan di http://localhost:${PORT}`);
+  });
+}
+
+export default app;
