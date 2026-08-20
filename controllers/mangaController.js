@@ -2,44 +2,20 @@ import { safeHttpUrl } from '../lib/security.js';
 import {
   scrapeMangaList,
   scrapeMangaDetail,
-  scrapeChapterImages
-} from '../lib/scraper.js';
+  scrapeChapterImages,
+} from '../lib/scraper/index.js';
+import { validatePage, validateLimit, validateQuery, validateSlug, validateId } from '../lib/validator.js';
 
 export const getMangaList = async (req, res) => {
   try {
-    const page = Math.max(
-      parseInt(req.query.page, 10) || 1,
-      1
-    );
+    const page = validatePage(req.query.page);
+    const limit = validateLimit(req.query.limit);
+    const query = validateQuery(req.query.query);
 
-    const limit = Math.min(
-      Math.max(
-        parseInt(req.query.limit, 10) || 10,
-        1
-      ),
-      100
-    );
-
-    const query =
-      typeof req.query.query === 'string'
-        ? req.query.query.trim()
-        : '';
-
-    const result =
-      await scrapeMangaList({
-        page,
-        limit,
-        query,
-        withMeta: true
-      });
-
+    const result = await scrapeMangaList({ page, limit, query, withMeta: true });
     const data = result.data;
     const total = result.total;
-
-    const totalPages =
-      Number.isFinite(total)
-        ? Math.ceil(total / limit)
-        : null;
+    const totalPages = Number.isFinite(total) ? Math.ceil(total / limit) : null;
 
     return res.json({
       success: true,
@@ -50,130 +26,69 @@ export const getMangaList = async (req, res) => {
         total,
         totalPages,
         hasPrevious: page > 1,
-        hasNext:
-          totalPages !== null
-            ? page < totalPages
-            : data.length === limit
-      }
+        hasNext: totalPages !== null ? page < totalPages : data.length === limit,
+      },
     });
-
   } catch (err) {
     console.error('getMangaList error:', err);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan pada server'
-    });
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
 export const getMangaDetail = async (req, res) => {
   try {
-    const { slug } = req.query;
-
+    const slug = validateSlug(req.query.slug);
     if (!slug) {
-      return res.status(400).json({
-        success: false,
-        message: 'Parameter slug dibutuhkan'
-      });
+      return res.status(400).json({ success: false, message: 'Parameter slug tidak valid' });
     }
-
-    const data =
-      await scrapeMangaDetail(slug);
-
-    return res.json({
-      success: true,
-      data
-    });
-
+    const data = await scrapeMangaDetail(slug);
+    return res.json({ success: true, data });
   } catch (err) {
-
-    console.error(
-      'getMangaDetail error:',
-      err
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan pada server'
-    });
+    console.error('getMangaDetail error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
 export const getChapterImages = async (req, res) => {
   try {
-    const { id } = req.query;
-
+    const id = validateId(req.query.id);
     if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Parameter ID Chapter dibutuhkan'
-      });
+      return res.status(400).json({ success: false, message: 'Parameter ID Chapter tidak valid' });
     }
-
-    const data =
-      await scrapeChapterImages(id);
-
-    return res.json({
-      success: true,
-      data
-    });
-
+    const data = await scrapeChapterImages(id);
+    return res.json({ success: true, data });
   } catch (err) {
-
-    console.error(
-      'getChapterImages error:',
-      err
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan pada server'
-    });
+    console.error('getChapterImages error:', err);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
 export const proxyImage = async (req, res) => {
   try {
     const imageUrl = req.query.url;
-      if (!imageUrl) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'URL gambar tidak disertakan' 
-        });
-      }
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, message: 'URL gambar tidak disertakan' });
+    }
 
-      const safeUrl = safeHttpUrl(imageUrl);
-
-      if (!safeUrl) {
-        return res.status(400).json({
-          success: false,
-          message: 'URL gambar tidak valid'
-        });
-      }
+    const safeUrl = safeHttpUrl(imageUrl);
+    if (!safeUrl) {
+      return res.status(400).json({ success: false, message: 'URL gambar tidak valid' });
+    }
 
     const controller = new AbortController();
-
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 12000);
+    const timeout = setTimeout(() => controller.abort(), 12000);
 
     const response = await fetch(safeUrl, {
-      // redirect: 'manual', 
-      // Nanti harus diaktifkan jika ingin menolak redirect,
-      //  tapi untuk sementara biarkan dulu, harus konfihurasi gambar di index,detail,allManga, 
-      // karena beberapa gambar di doujin.desu.xxx mengarah ke redirect, jadi harus diizinkan dulu
+      redirect: 'manual',
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Referer': 'https://doujin.desu.xxx'
-      }
+        Referer: 'https://doujin.desu.xxx',
+      },
     });
+
     if (response.status >= 300 && response.status < 400) {
-      return res.status(400).json({
-        success: false,
-        message: 'Redirect gambar tidak diizinkan'
-      });
+      return res.status(400).json({ success: false, message: 'Redirect gambar tidak diizinkan' });
     }
     clearTimeout(timeout);
 
@@ -182,37 +97,21 @@ export const proxyImage = async (req, res) => {
     }
 
     const contentType = response.headers.get('content-type') || '';
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif'
-    ];
-
-    if (!allowedTypes.some(type => contentType.includes(type))) {
-      return res.status(400).json({
-        success: false,
-        message: 'Response bukan file gambar'
-      });
+    if (!allowedTypes.some((type) => contentType.includes(type))) {
+      return res.status(400).json({ success: false, message: 'Response bukan file gambar' });
     }
+
     res.setHeader('Content-Type', contentType);
     const buffer = await response.arrayBuffer();
-    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+    const MAX_SIZE = 10 * 1024 * 1024;
     if (buffer.byteLength > MAX_SIZE) {
-      return res.status(413).json({
-        success: false,
-        message: 'Ukuran gambar terlalu besar'
-      });
+      return res.status(413).json({ success: false, message: 'Ukuran gambar terlalu besar' });
     }
     return res.send(Buffer.from(buffer));
-  
-    } catch (err) {
-      console.error('proxyImage error:', err);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Gagal mengambil gambar'
-    });
+  } catch (err) {
+    console.error('proxyImage error:', err);
+    return res.status(500).json({ success: false, message: 'Gagal mengambil gambar' });
   }
 };
