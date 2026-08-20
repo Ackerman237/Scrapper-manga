@@ -34,6 +34,7 @@ function renderChapterList() {
   if (filtered.length > 0) {
     filtered.forEach((ch, idx) => {
       const chId = ch.id || ch.chapter_id || ch.number || ch.chapter;
+      if (!chId) return; // skip chapter tanpa ID valid
       const chNum = ch.number || ch.chapter || (idx + 1);
       const chTitle = ch.title || `${globalTitleText} Chapter ${chNum}`;
       const chDate = ch.date || ch.releaseTime || "-";
@@ -311,6 +312,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   setupBackToTop(el("backToTop"), 400);
+
+  // Search dari halaman detail → redirect ke allManga dengan query
+  const searchForm = document.getElementById('searchForm');
+  const searchInput = document.getElementById('searchInput');
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const query = searchInput ? searchInput.value.trim() : '';
+      if (!query) return;
+      const params = new URLSearchParams();
+      params.set('page', '1');
+      params.set('query', query);
+      window.location.href = `/doujinPage/html/allManga.html?${params.toString()}`;
+    });
+  }
 });
 
 function cleanSynopsis(raw) {

@@ -80,10 +80,17 @@ function renderMangaCard(manga) {
 
   const mangaSlug = manga.slug || manga.endpoint || '';
 
+  // Proxy cover lewat server agar tidak diblokir hotlink protection
+  const rawThumb = manga.thumb || manga.cover || '';
+  const thumbSrc = rawThumb
+    ? `/api/image-proxy?url=${encodeURIComponent(rawThumb)}`
+    : 'https://placehold.co/110x140?text=No+Cover';
+
   let chaptersHTML = '';
   if (Array.isArray(manga.chapters) && manga.chapters.length > 0) {
     manga.chapters.slice(0, 2).forEach((ch) => {
       const chId = ch.id || ch.chapter_id || '';
+      if (!chId) return; // skip chapter tanpa ID valid
       const isNew = ch.isNew ? '<span class="badge-new">NEW</span>' : '';
       chaptersHTML += `
         <a href="/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}" class="chapter-btn" onclick="event.stopPropagation();">
@@ -96,7 +103,7 @@ function renderMangaCard(manga) {
 
   card.innerHTML = `
     <div class="thumb-container" data-slug="${mangaSlug}">
-      <img src="${manga.thumb || manga.cover || ''}" alt="${manga.title || ''}" loading="lazy" referrerpolicy="no-referrer">
+      <img src="${thumbSrc}" alt="${manga.title || ''}" loading="lazy">
       <span class="rating-tag">⭐ ${manga.rating ?? '-'}</span>
     </div>
     <div class="manga-info">
@@ -105,52 +112,14 @@ function renderMangaCard(manga) {
     </div>
   `;
 
-  card.querySelectorAll('[data-slug]').forEach((el) => {
-    el.addEventListener('click', () => {
-      if (!mangaSlug) return;
-      window.location.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
-    });
-  });
-
-  return card;
-}
-
-  const card = document.createElement('div');
-  card.className = 'manga-card';
-
-  const mangaSlug = manga.slug || manga.endpoint || '';
-
-  let chaptersHTML = '';
-  if (Array.isArray(manga.chapters) && manga.chapters.length > 0) {
-    manga.chapters.slice(0, 2).forEach((ch) => {
-      const chId = ch.id || ch.chapter_id || '';
-      const isNew = ch.isNew ? '<span class="badge-new">NEW</span>' : '';
-      chaptersHTML += `
-        <a href="/doujinPage/html/reader.html?id=${encodeURIComponent(chId)}" class="chapter-btn" onclick="event.stopPropagation();">
-          <span>${ch.title || 'Chapter ' + ch.chapter} ${isNew}</span>
-          <span class="time-ago">${ch.date || ch.releaseTime || ''}</span>
-        </a>
-      `;
+  // Guard: hanya pasang click handler kalau slug valid
+  if (mangaSlug) {
+    card.querySelectorAll('[data-slug]').forEach((el) => {
+      el.addEventListener('click', () => {
+        window.location.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
+      });
     });
   }
-
-  card.innerHTML = `
-    <div class="thumb-container" data-slug="${mangaSlug}">
-      <img src="${manga.thumb || manga.cover || ''}" alt="${manga.title || ''}" loading="lazy" referrerpolicy="no-referrer">
-      <span class="rating-tag">⭐ ${manga.rating ?? '-'}</span>
-    </div>
-    <div class="manga-info">
-      <h3 class="manga-title" data-slug="${mangaSlug}">${manga.title || ''}</h3>
-      <div class="chapter-list">${chaptersHTML}</div>
-    </div>
-  `;
-
-  card.querySelectorAll('[data-slug]').forEach((el) => {
-    el.addEventListener('click', () => {
-      if (!mangaSlug) return;
-      window.location.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(mangaSlug)}`;
-    });
-  });
 
   return card;
 }
