@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import apiRoutes from './routes/api.js';
+import logger from './lib/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,5 +34,5 @@ app.use('/api', apiRoutes);
 
 // 4. Jalankan Server
 app.listen(PORT, () => {
-  console.log(`🚀 Server MVC berjalan di http://localhost:${PORT}`);
+  logger.info({ port: PORT }, `Server berjalan di http://localhost:${PORT}`);
 });

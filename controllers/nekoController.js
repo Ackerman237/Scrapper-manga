@@ -7,6 +7,7 @@ import {
   scrapeNekoCategories,
 } from '../lib/scraper/nekoScraper.js';
 import { validatePage, validateCategory, validateQuery, validateSlug, validateUrl } from '../lib/validator.js';
+import logger from '../lib/logger.js';
 
 export const getNekoList = async (req, res) => {
   try {
@@ -102,7 +103,7 @@ export const proxyNekoPlayer = async (req, res) => {
     res.send(html);
   } catch (err) {
     if (page) await page.close();
-    console.error('proxyNekoPlayer error:', err);
+    logger.error({ err }, 'proxyNekoPlayer error');
     res.status(500).json({ success: false, message: 'Gagal memuat player' });
   }
 };

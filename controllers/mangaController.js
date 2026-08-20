@@ -5,6 +5,7 @@ import {
   scrapeChapterImages,
 } from '../lib/scraper/index.js';
 import { validatePage, validateLimit, validateQuery, validateSlug, validateId } from '../lib/validator.js';
+import logger from '../lib/logger.js';
 
 export const getMangaList = async (req, res) => {
   try {
@@ -30,7 +31,7 @@ export const getMangaList = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('getMangaList error:', err);
+    logger.error({ err }, 'getMangaList error');
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -44,7 +45,7 @@ export const getMangaDetail = async (req, res) => {
     const data = await scrapeMangaDetail(slug);
     return res.json({ success: true, data });
   } catch (err) {
-    console.error('getMangaDetail error:', err);
+    logger.error({ err }, 'getMangaDetail error');
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -58,7 +59,7 @@ export const getChapterImages = async (req, res) => {
     const data = await scrapeChapterImages(id);
     return res.json({ success: true, data });
   } catch (err) {
-    console.error('getChapterImages error:', err);
+    logger.error({ err }, 'getChapterImages error');
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -111,7 +112,7 @@ export const proxyImage = async (req, res) => {
     }
     return res.send(Buffer.from(buffer));
   } catch (err) {
-    console.error('proxyImage error:', err);
+    logger.error({ err }, 'proxyImage error');
     return res.status(500).json({ success: false, message: 'Gagal mengambil gambar' });
   }
 };
