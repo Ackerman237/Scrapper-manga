@@ -5,8 +5,8 @@ Update terakhir: 2026-08-20
 
 ## STATUS PROYEK
 - Total item: 27
-- Selesai: 19
-- Belum: 8
+- Selesai: 20
+- Belum: 7
 
 ---
 
@@ -29,7 +29,7 @@ Update terakhir: 2026-08-20
 - [x] Retry Logic (max 2, backoff 1s/2s, hanya timeout/502/503/504)
 
 ## P2 - PERFORMANCE
-- [ ] Concurrency Control (limit 3-5 parallel requests)
+- [x] Concurrency Control (limit 5 parallel requests, semaphore queue)
 
 ## P3 - QUALITY & DEVOPS
 - [ ] Structured Logging (winston/pino, JSON format)
