@@ -62,7 +62,7 @@ export const getMangaList = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: err.message
+      message: 'Terjadi kesalahan pada server'
     });
   }
 };
@@ -95,7 +95,7 @@ export const getMangaDetail = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: err.message
+      message: 'Terjadi kesalahan pada server'
     });
   }
 };
@@ -128,7 +128,7 @@ export const getChapterImages = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: err.message
+      message: 'Terjadi kesalahan pada server'
     });
   }
 };

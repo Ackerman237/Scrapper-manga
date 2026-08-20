@@ -20,7 +20,7 @@ function saveReadingHistory(data) {
 
   // maksimal 50 riwayat
   history =
-    history.slice(0,50);
+    history.slice(0,10);
 
   localStorage.setItem(
     "history",
@@ -638,7 +638,7 @@ const chapters =
       saveReadingHistory({
         slug: mangaSlug,
         title: mangaTitle,
-        thumb: chapterData.thumb || mangaDetail?.thumb || mangaDetail?.cover || "",
+        thumb: chapterData.thumb || mangaDetail?.thumb || mangaDetail?.cover || mangaDetail?.coverUrl || "https://placehold.co/420x560?text=No+Cover",
         chapter: chapterData.number ?? chapterData.chapter ?? (currentIndex >= 0 ? currentIndex + 1 : 1),
         chapterId: chapterId,
         lastRead: new Date().toISOString()

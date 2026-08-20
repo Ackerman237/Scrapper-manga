@@ -13,7 +13,7 @@ export const getNekoList = async (req, res) => {
     const data = await scrapeNekoList(page);
     return res.json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -27,7 +27,7 @@ export const getNekoCategory = async (req, res) => {
     const data = await scrapeNekoCategory(category, page);
     return res.json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -41,7 +41,7 @@ export const getNekoSearch = async (req, res) => {
     const data = await scrapeNekoSearch(query, page);
     return res.json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -54,7 +54,7 @@ export const getNekoDetail = async (req, res) => {
     const data = await scrapeNekoDetail(slug);
     return res.json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
@@ -63,7 +63,7 @@ export const getNekoCategories = async (_req, res) => {
     const data = await scrapeNekoCategories();
     return res.json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
