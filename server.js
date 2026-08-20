@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import apiRoutes from './routes/api.js';
 import logger from './lib/logger.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,7 +33,13 @@ app.use(
 // 3. Routing API
 app.use('/api', apiRoutes);
 
-// 4. Jalankan Server
+// 4. 404 handler
+app.use(notFoundHandler);
+
+// 5. Error handler
+app.use(errorHandler);
+
+// 6. Jalankan Server
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     logger.info({ port: PORT }, `Server berjalan di http://localhost:${PORT}`);
