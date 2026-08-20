@@ -74,11 +74,22 @@ function showEmpty(container, message, btnLabel, onAction) {
   }
 }
 
+function getMangaFlag(type) {
+  const t = (type || '').toLowerCase();
+  if (t === 'manga') return '🇯🇵';
+  if (t === 'manhwa') return '🇰🇷';
+  if (t === 'manhua') return '🇨🇳';
+  if (t === 'doujinshi') return '🇯🇵';
+  return '';
+}
+
 function renderMangaCard(manga) {
   const card = document.createElement('div');
   card.className = 'manga-card';
 
   const mangaSlug = manga.slug || manga.endpoint || '';
+  const flag = getMangaFlag(manga.type);
+  if (flag) card.dataset.flag = flag;
 
   // Proxy cover lewat server agar tidak diblokir hotlink protection
   const rawThumb = manga.thumb || manga.cover || '';
