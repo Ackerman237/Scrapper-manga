@@ -5,8 +5,8 @@ Update terakhir: 2026-08-20
 
 ## STATUS PROYEK
 - Total item: 27
-- Selesai: 22
-- Belum: 5
+- Selesai: 26
+- Belum: 1
 
 ---
 
@@ -34,9 +34,9 @@ Update terakhir: 2026-08-20
 ## P3 - QUALITY & DEVOPS
 - [x] Structured Logging (pino, JSON format, ISO timestamp)
 - [x] Unit Tests (vitest, 68 tests - validator, security, cache, fetcher)
-- [ ] Integration Tests
-- [ ] CI/CD (GitHub Actions)
-- [ ] Middleware directory (rateLimit.js, errorHandler.js)
+- [x] Integration Tests (19 tests - semua API endpoint, 87 total)
+- [x] CI/CD (GitHub Actions - node 18/20/22, on push/PR)
+- [x] Middleware directory (rateLimit.js, errorHandler.js)
 
 ## P4 - FITUR BARU
 - [ ] Pagination angka (1 2 3 4 5) di allManga
