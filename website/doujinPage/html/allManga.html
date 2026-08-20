@@ -6,6 +6,8 @@
   <title>Doujin Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="/doujinPage/css/base.css">
+  <link rel="stylesheet" href="/doujinPage/css/components.css">
+  <link rel="stylesheet" href="/doujinPage/css/cards.css">
   <link rel="stylesheet" href="/doujinPage/css/allManga.css">
 </head>
 <body>
@@ -28,7 +30,6 @@
         <a href="/doujinPage/html/account.html">ACCOUNT</a>
       </nav>
 
-      <!-- SEARCH BAR -->
       <form id="searchForm" class="search-box">
         <input type="text" id="searchInput" placeholder="Cari judul komik...">
         <button type="submit">CARI</button>
@@ -42,47 +43,48 @@
 
   <main>
 
-
-    <!-- MANGA LIST SECTION -->
     <section class="manga-section">
-      <h2 id="sectionTitle" class="section-title">ALL Series</h2>
+      <div class="toolbar">
+        <h2 id="sectionTitle" class="section-title">ALL Series</h2>
+
+        <div class="toolbar-controls">
+          <div class="filter-group">
+            <label for="genreSelect" class="filter-label">GENRE</label>
+            <select id="genreSelect" class="filter-select">
+              <option value="">Semua Genre</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="sortSelect" class="filter-label">URUTKAN</label>
+            <select id="sortSelect" class="filter-select">
+              <option value="newest">Terbaru</option>
+              <option value="rating">Rating</option>
+              <option value="title">Judul A-Z</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
       <div id="mangaGrid" class="manga-grid">
         <p class="loading">Memuat manga...</p>
       </div>
 
-      <!-- TOMBOL SEE MORE -->
       <div class="pagination">
-        <button
-          id="prevBtn"
-          class="pagination-btn"
-          type="button"
-        >
-          ← PREVIOUS
-        </button>
-
-        <div
-          id="pageNumbers"
-          class="page-numbers"
-          aria-label="Pagination"
-        ></div>
-
-        <button
-          id="nextBtn"
-          class="pagination-btn"
-          type="button"
-        >
-          NEXT →
-        </button>
+        <button id="prevBtn" class="pagination-btn" type="button">← PREVIOUS</button>
+        <div id="pageNumbers" class="page-numbers" aria-label="Pagination"></div>
+        <button id="nextBtn" class="pagination-btn" type="button">NEXT →</button>
       </div>
     </section>
 
   </main>
 
-  <!-- FLOATING BACK TO TOP BUTTON -->
   <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
 
-  <script src="/doujinPage/js/nav.js" defer></script>
+  <script src="/doujinPage/shared/nav.js" defer></script>
+  <script src="/doujinPage/shared/api.js" defer></script>
+  <script src="/doujinPage/shared/ui.js" defer></script>
+  <script src="/doujinPage/shared/storage.js" defer></script>
   <script src="/doujinPage/js/allManga.js" defer></script>
 </body>
 </html>

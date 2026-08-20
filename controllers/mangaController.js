@@ -3,17 +3,22 @@ import {
   scrapeMangaList,
   scrapeMangaDetail,
   scrapeChapterImages,
+  scrapeGenres,
 } from '../lib/scraper/index.js';
-import { validatePage, validateLimit, validateQuery, validateSlug, validateId } from '../lib/validator.js';
+import { validatePage, validateLimit, validateQuery, validateSlug, validateId, validateCategory } from '../lib/validator.js';
 import logger from '../lib/logger.js';
+
+const VALID_SORTS = new Set(['newest', 'rating', 'title']);
 
 export const getMangaList = async (req, res) => {
   try {
     const page = validatePage(req.query.page);
     const limit = validateLimit(req.query.limit);
     const query = validateQuery(req.query.query);
+    const genre = validateCategory(req.query.genre) || '';
+    const sort = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'newest';
 
-    const result = await scrapeMangaList({ page, limit, query, withMeta: true });
+    const result = await scrapeMangaList({ page, limit, query, genre, sort, withMeta: true });
     const data = result.data;
     const total = result.total;
     const totalPages = Number.isFinite(total) ? Math.ceil(total / limit) : null;
@@ -32,6 +37,16 @@ export const getMangaList = async (req, res) => {
     });
   } catch (err) {
     logger.error({ err }, 'getMangaList error');
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+export const getMangaCategories = async (req, res) => {
+  try {
+    const data = await scrapeGenres();
+    return res.json({ success: true, data });
+  } catch (err) {
+    logger.error({ err }, 'getMangaCategories error');
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
