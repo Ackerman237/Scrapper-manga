@@ -28,6 +28,53 @@ function saveReadingHistory(data) {
   );
 }
 
+function saveReadingPosition(data) {
+
+  localStorage.setItem(
+    "readingPosition",
+    JSON.stringify({
+      slug: data.slug,
+      chapterId: data.chapterId,
+      page: data.page,
+      updatedAt: new Date().toISOString()
+    })
+  );
+
+}
+
+function restoreReadingPosition(imageList, slug, chapterId) {
+
+  const saved =
+    JSON.parse(
+      localStorage.getItem("readingPosition")
+    );
+
+  if (!saved) return;
+
+  if (
+    saved.slug !== slug ||
+    saved.chapterId !== chapterId
+  ) {
+    return;
+  }
+
+  const pages =
+    imageList.querySelectorAll("img");
+
+  const target =
+    pages[saved.page - 1];
+
+  if (!target) return;
+
+  setTimeout(() => {
+    target.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }, 3000);
+
+}
+
 async function fetchJsonWithTimeout(url) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -114,6 +161,54 @@ function preloadNextImages(container, count = 2) {
     };
     preload.src = src;
   });
+}
+
+function setupReadingProgress(imageList, totalPages, readingData) {
+  const progress = document.createElement('div');
+  progress.className = 'reader-progress';
+  progress.textContent = `Page 0 / ${totalPages}`;
+
+  document.body.appendChild(progress);
+  let hideTimer;
+    function showProgress() {
+      progress.classList.add("show");
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        progress.classList.remove("show");
+      }, 500);
+    }
+
+    window.addEventListener("scroll", showProgress, { passive: true });
+
+  const pages = Array.from(imageList.querySelectorAll('img'));
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+
+      const index = pages.indexOf(entry.target);
+
+      if (index >= 0) {
+        progress.textContent = `Page ${index + 1} / ${totalPages}`;
+      }
+
+      if (index >= 0) {
+      const page = index + 1;
+        progress.textContent = `Page ${page} / ${totalPages}`;
+        saveReadingPosition({
+          ...readingData,
+          page
+        });
+      }
+
+    });
+  }, {
+    threshold: 0.5
+  });
+
+  pages.forEach(img => observer.observe(img));
+
+  return progress;
 }
 
 function observeChapterEnd(endSentinel, onReachEnd) {
@@ -674,6 +769,19 @@ const chapters =
     container.appendChild(imageList);
       setupLazyImages(imageList);
       preloadNextImages(imageList);
+      setupReadingProgress(
+        imageList,
+        imageUrls.length,
+        {
+          slug: mangaSlug,
+          chapterId: chapterId
+        }
+      );
+      restoreReadingPosition(
+        imageList,
+        mangaSlug,
+        chapterId
+      );
 
     const goNext = () => {
       if (!nextChapter) return;

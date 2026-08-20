@@ -462,6 +462,32 @@ body.reader-page {
   transform: rotate(180deg);
 }
 
+.reader-progress {
+  position: fixed;
+  right: 12px;
+  top: 60px;
+
+  padding: 4px 10px;
+  border-radius: 12px;
+
+  background: rgba(0,0,0,0.6);
+  color: white;
+
+  font-size: 12px;
+  z-index: 9999;
+
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: .25s ease;
+
+  pointer-events: none;
+}
+
+.reader-progress.show {
+  opacity: 0.7;
+  transform: translateY(0);
+}
+
 @keyframes reader-error-fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -469,7 +495,19 @@ body.reader-page {
 
 /* ---------- responsive (reader) ---------- */
 
+/* Reading Progress */
+.reader-progress { position: fixed; right: 20px; top: 70px; padding: 4px 10px; border-radius: 12px; background: rgba(0,0,0,0.6); color: #fff; font-size: 12px; z-index: 9999; opacity: 0; transform: translateY(-10px); transition: .25s ease; pointer-events: none; }
+.reader-progress.show { opacity: 0.65; transform: translateY(0); }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .reader-progress { top: 38px; right: 6px; padding: 2px 7px; border-radius: 10px; font-size: 10px; opacity: 0; }
+  .reader-progress.show { opacity: 0.55; }
+}
+
+/* Small mobile */
 @media (max-width: 700px) {
+  .reader-progress { top: 32px; right: 6px; padding: 2px 6px; font-size: 9px; border-radius: 8px; }
   .reader-topbar { padding: 12px 14px; gap: 10px; }
   .reader-tb-title { font-size: 13px; }
   .reader-tb-title #readerSeriesTitle { max-width: 40vw; }
