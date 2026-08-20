@@ -100,6 +100,22 @@ function setupLazyImages(container) {
   });
 }
 
+function preloadNextImages(container, count = 2) {
+  const images = Array.from(container.querySelectorAll('img[data-src]'));
+  images.slice(0, count).forEach((img) => {
+    const src = img.dataset.src;
+    if (!src) return;
+    const preload = new Image();
+    preload.onload = () => {
+      console.log("Preloaded:", src);
+    };
+    preload.onerror = () => {
+      console.warn("Preload gagal:", src);
+    };
+    preload.src = src;
+  });
+}
+
 function observeChapterEnd(endSentinel, onReachEnd) {
   if (!endSentinel || !('IntersectionObserver' in window)) return null;
   const observer = new IntersectionObserver((entries) => {
@@ -656,7 +672,8 @@ const chapters =
     imageList.appendChild(endSentinel);
 
     container.appendChild(imageList);
-    setupLazyImages(imageList);
+      setupLazyImages(imageList);
+      preloadNextImages(imageList);
 
     const goNext = () => {
       if (!nextChapter) return;
