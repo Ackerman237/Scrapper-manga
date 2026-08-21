@@ -1,0 +1,1005 @@
+AUDIT & RENCANA MIGRASI SCRAPER-MANGA
+Upgrade Scraping Engine dari doujin-scraper ke Scrapper-manga
+Tanggal: 20 Agustus 2026
+
+============================================================
+1. TUJUAN
+============================================================
+
+Tujuan utama adalah meng-upgrade fungsi scraping pada project:
+
+    Ackerman237/Scrapper-manga
+
+dengan mengambil seluruh improvement penting dari prototype:
+
+    kyy0887/doujin-scraper
+
+tanpa merusak fungsi aplikasi lama seperti frontend, reader, bookmark,
+routing, controller, image proxy, dan fitur library.
+
+Pendekatan yang disarankan BUKAN mengganti seluruh project dengan prototype.
+
+Pendekatan yang disarankan:
+
+    PROJECT LAMA
+        +
+    SCRAPING ENGINE PROTOTYPE TERBARU
+        +
+    SECURITY HARDENING
+        +
+    TESTING
+        =
+    SCRAPPER-MANGA VERSI BARU
+
+
+============================================================
+2. HASIL PENILAIAN KEDUA PROJECT
+============================================================
+
+Scrapper-manga:
+- Lebih lengkap sebagai aplikasi.
+- Memiliki frontend/website.
+- Memiliki routes dan controllers.
+- Memiliki reader.
+- Memiliki bookmark/favorite.
+- Memiliki image proxy.
+- Memiliki API layer.
+- Sudah mempunyai security.js.
+- Tetapi scraping engine masih perlu ditingkatkan.
+
+doujin-scraper:
+- Lebih fokus sebagai scraping engine/library.
+- Struktur scraper lebih terisolasi.
+- Memiliki timeout.
+- Memiliki caching.
+- Memiliki normalization/validasi data.
+- Memiliki sanitasi URL.
+- Memiliki mekanisme pengambilan secret/salt.
+- Memiliki unit test.
+- Memiliki CI.
+- Pagination scraper lebih rapi.
+- Lebih mudah dipelihara sebagai core scraper.
+
+Kesimpulan:
+
+Scrapper-manga tidak perlu dibuang.
+
+Yang perlu diganti/ditingkatkan adalah lapisan scraping.
+
+
+============================================================
+3. TARGET ARSITEKTUR BARU
+============================================================
+
+Target akhir:
+
+    website/
+        frontend lama tetap
+
+    routes/
+        route aplikasi tetap
+
+    controllers/
+        controller aplikasi tetap
+        tetapi memanggil scraper service baru
+
+    lib/
+        scraper/
+            doujin.js
+            neko.js
+            http.js
+            cache.js
+            normalize.js
+            decrypt.js
+            security.js
+
+    middleware/
+        rateLimit.js
+        errorHandler.js
+
+    tests/
+        scraper.test.js
+        neko.test.js
+        security.test.js
+        proxy.test.js
+
+
+Prinsip:
+
+Controller TIDAK mengurus detail scraping.
+
+Scraper service TIDAK mengurus frontend.
+
+Security TIDAK dicampur dengan parsing HTML.
+
+HTTP request handling dipisahkan dari parsing data.
+
+
+============================================================
+4. FITUR PROTOTYPE YANG WAJIB DIIMPLEMENTASIKAN
+============================================================
+
+A. REQUEST TIMEOUT
+------------------
+
+Implementasikan AbortController.
+
+Target awal:
+
+    timeout = 12 detik
+
+Semua request scraper harus mempunyai timeout.
+
+Alasan:
+- Source bisa hang.
+- Menghindari request menggantung.
+- Mengurangi penggunaan memory/socket.
+- Mencegah request menumpuk.
+
+Pola:
+
+    request
+       |
+       +-- sukses --> response
+       |
+       +-- > 12 detik --> abort
+
+
+B. CACHE
+--------
+
+Implementasikan cache untuk request scraping yang berulang.
+
+Prototype menggunakan in-memory Map + TTL.
+
+Target awal:
+
+    TTL = 60 detik
+
+Cache key harus mempertimbangkan:
+- endpoint
+- query
+- page
+- parameter penting lainnya
+
+Contoh:
+
+    manga:list:page=1
+    manga:search:naruto:page=1
+
+Untuk deployment multi-instance, pertimbangkan Redis nanti.
+
+Jangan menjadikan in-memory cache sebagai penyimpanan permanen.
+
+
+C. DATA NORMALIZATION
+---------------------
+
+Semua data dari source adalah UNTRUSTED.
+
+Setelah parsing:
+- pastikan tipe data benar
+- trim string
+- batasi panjang string
+- batasi array
+- validasi URL
+- jangan memasukkan object asing ke response
+
+Contoh batas:
+- title: maksimal 500 karakter
+- slug: maksimal 200
+- type: maksimal 50
+- status: maksimal 50
+
+Batas tersebut dapat disesuaikan.
+
+
+D. PAGINATION
+-------------
+
+Gunakan konsep:
+
+    offset = (page - 1) * limit
+
+Pertahankan metadata pagination yang sudah bagus di project lama:
+
+    totalCount
+    totalPages
+    currentPage
+    hasPrevious
+    hasNext
+
+Jangan menghilangkan metadata yang sudah dipakai frontend.
+
+
+E. URL SANITIZATION
+-------------------
+
+Pertahankan security.js milik project lama, tetapi gabungkan
+prinsip dari prototype.
+
+URL harus:
+- berhasil diparse
+- hanya http/https
+- tidak menerima javascript:
+- tidak menerima data:
+- tidak menerima vbscript:
+- tidak menerima URL malformed
+
+JANGAN menganggap validasi http/https saja sudah cukup untuk SSRF.
+
+
+F. SECRET/SALT HANDLING
+-----------------------
+
+Pertahankan mekanisme prototype yang mengambil secret/salt dari
+source bila memang diperlukan.
+
+Secret/salt tersebut diperlakukan sebagai konfigurasi runtime:
+
+    DOUJIN_APP_SECRET
+    DOUJIN_SALT
+
+Simpan di environment/config.
+
+Jangan commit credential sebenarnya ke repository.
+
+Catatan:
+Jika secret/salt memang harus diketahui browser source website,
+itu bukan credential privat seperti password database.
+
+
+G. DECRYPTION
+-------------
+
+Pisahkan logic decrypt dari scraper utama.
+
+Contoh:
+
+    decrypt.js
+
+Tugas:
+    encrypted response
+          |
+          v
+       decrypt
+          |
+          v
+     parsed object
+
+Jika decrypt gagal:
+- log detail di server
+- client mendapatkan error generik
+
+
+H. TESTING
+----------
+
+Adopsi pola test prototype.
+
+Minimal test:
+1. scraper list
+2. scraper detail
+3. chapter images
+4. search
+5. genres
+6. Neko scraper
+7. URL sanitizer
+8. malformed URL
+9. HTML sanitization
+10. pagination
+11. timeout
+12. cache
+13. decryption failure
+14. image proxy security
+
+
+============================================================
+5. SECURITY YANG HARUS DITINGKATKAN
+============================================================
+
+INI PRIORITAS TINGGI.
+
+Project lama mempunyai endpoint image proxy yang menerima URL
+dari request kemudian melakukan fetch.
+
+Konsep seperti:
+
+    GET /api/image-proxy?url=...
+
+harus dianggap berbahaya jika tidak dibatasi.
+
+Risiko utama:
+    SSRF (Server-Side Request Forgery)
+
+
+Serangan konseptual:
+
+    attacker
+       |
+       v
+    image-proxy
+       |
+       v
+    server kamu
+       |
+       +--> localhost
+       +--> private network
+       +--> metadata service
+
+
+JANGAN hanya melakukan:
+
+    protocol === "http:" || protocol === "https:"
+
+Tambahkan:
+
+
+A. DOMAIN ALLOWLIST
+
+Hanya izinkan host yang memang diperlukan.
+
+Contoh konsep:
+
+    ALLOWED_IMAGE_HOSTS = [
+        "domain-source-1",
+        "domain-source-2"
+    ]
+
+
+B. BLOK PRIVATE IP
+
+Tolak:
+- 127.0.0.0/8
+- 10.0.0.0/8
+- 172.16.0.0/12
+- 192.168.0.0/16
+- 169.254.0.0/16
+- ::1
+- fc00::/7
+- fe80::/10
+
+Termasuk hostname yang resolve ke private address.
+
+
+C. REDIRECT PROTECTION
+
+Jangan sampai:
+
+    public-domain
+          |
+          v
+    redirect
+          |
+          v
+    private IP
+
+Redirect harus divalidasi lagi.
+
+
+D. RESPONSE SIZE LIMIT
+
+Image proxy tidak boleh menerima response tanpa batas.
+
+Tetapkan batas ukuran response.
+
+
+E. CONTENT TYPE
+
+Pastikan response sesuai dengan kebutuhan image.
+
+Misalnya:
+- image/jpeg
+- image/png
+- image/webp
+- image/gif
+
+Jangan sembarang meneruskan content type.
+
+
+F. TIMEOUT
+
+Image proxy juga harus mempunyai timeout.
+
+
+G. RATE LIMIT
+
+Endpoint proxy sangat mudah disalahgunakan.
+
+Berikan rate limit.
+
+
+============================================================
+6. API ERROR HANDLING
+============================================================
+
+Jangan kirim error internal secara langsung.
+
+Buruk:
+
+    {
+      "message": err.message
+    }
+
+Karena err.message bisa mengandung:
+- URL internal
+- path server
+- detail library
+- informasi source
+- detail implementasi
+
+Gunakan:
+
+SERVER LOG:
+    detail lengkap
+
+CLIENT:
+    {
+      "success": false,
+      "message": "Gagal mengambil data"
+    }
+
+
+============================================================
+7. RATE LIMITING
+============================================================
+
+Tambahkan rate limiter minimal pada:
+- search
+- manga list
+- manga detail
+- chapter
+- image proxy
+
+Tujuannya:
+- mencegah abuse
+- melindungi source
+- melindungi server
+- mengurangi request berlebihan
+
+Cache + timeout + rate limit + concurrency limit harus bekerja
+bersama.
+
+
+============================================================
+8. RETRY
+============================================================
+
+Retry boleh ditambahkan, tetapi JANGAN retry tanpa batas.
+
+Rekomendasi:
+
+    max retry = 1 atau 2
+
+Retry hanya untuk error transient tertentu.
+
+Jangan retry:
+- invalid URL
+- 400
+- 401
+- 403
+- parsing error
+- decrypt error
+
+Pertimbangkan retry untuk:
+- timeout
+- 502
+- 503
+- 504
+
+Gunakan backoff.
+
+
+============================================================
+9. STRUKTUR FILE YANG DISARANKAN
+============================================================
+
+Struktur target:
+
+lib/
+    scraper/
+        doujin.js
+        neko.js
+        http.js
+        cache.js
+        normalize.js
+        decrypt.js
+        security.js
+
+controllers/
+    mangaController.js
+    nekoController.js
+
+middleware/
+    rateLimit.js
+    errorHandler.js
+
+tests/
+    scraper.test.js
+    neko.test.js
+    security.test.js
+    proxy.test.js
+
+
+Jika tidak ingin terlalu banyak folder, struktur sederhana juga boleh:
+
+lib/
+    scraper.js
+    nekoScraper.js
+    http.js
+    cache.js
+    normalize.js
+    decrypt.js
+    security.js
+
+
+============================================================
+10. MIGRASI SCRAPER
+============================================================
+
+LANGKAH 1
+
+Backup project lama.
+
+Buat branch:
+
+    upgrade-scraper
+
+
+LANGKAH 2
+
+Bandingkan fungsi scraper lama dengan prototype.
+
+Petakan:
+
+    fungsi lama       -> fungsi baru
+
+Contoh:
+
+    scrapeMangaList()
+        -> scrapeMangaList()
+
+    scrapeMangaDetail()
+        -> scrapeMangaDetail()
+
+    scrapeChapterImages()
+        -> scrapeChapterImages()
+
+    scrapeGenres()
+        -> scrapeGenres()
+
+    searchManga()
+        -> searchManga()
+
+
+LANGKAH 3
+
+Jangan langsung mengubah controller.
+
+Pertama buat scraper baru dengan interface yang kompatibel.
+
+
+LANGKAH 4
+
+Pastikan output scraper baru kompatibel dengan frontend lama.
+
+Contoh:
+
+    {
+      title,
+      slug,
+      thumbnail,
+      type,
+      status,
+      genres,
+      chapters
+    }
+
+Jika prototype menggunakan nama field berbeda, lakukan mapping
+di scraper/normalizer.
+
+
+LANGKAH 5
+
+Ganti controller secara bertahap.
+
+Contoh:
+
+    controller
+       |
+       v
+    new scraper service
+       |
+       v
+    source
+
+
+LANGKAH 6
+
+Test semua endpoint.
+
+
+============================================================
+11. JANGAN MENGHAPUS FITUR LAMA SECARA LANGSUNG
+============================================================
+
+Fitur yang sebaiknya tetap:
+- frontend
+- reader
+- bookmark
+- favorite
+- routes
+- API response structure
+- image retry
+- library UI
+- Neko page
+- proxy, tetapi diamankan
+
+
+Prototype baru tidak menggantikan fitur-fitur tersebut.
+
+
+============================================================
+12. COMPATIBILITY LAYER
+============================================================
+
+Jika frontend lama membutuhkan bentuk response tertentu, buat mapping.
+
+Contoh:
+
+    scraper baru
+          |
+          v
+    normalize
+          |
+          v
+    application DTO
+          |
+          v
+    controller
+          |
+          v
+    frontend lama
+
+
+Jangan memaksa frontend berubah hanya karena scraper berubah.
+
+
+============================================================
+13. OBSERVABILITY / LOGGING
+============================================================
+
+Tambahkan log terstruktur.
+
+Contoh event:
+
+    SCRAPER_REQUEST
+    SCRAPER_TIMEOUT
+    SCRAPER_CACHE_HIT
+    SCRAPER_CACHE_MISS
+    SCRAPER_PARSE_ERROR
+    SCRAPER_DECRYPT_ERROR
+    PROXY_BLOCKED
+    RATE_LIMITED
+
+
+Jangan log:
+- credential
+- cookie sensitif
+- token
+- secret asli
+
+
+============================================================
+14. VALIDASI INPUT
+============================================================
+
+Semua parameter request harus divalidasi.
+
+page:
+    integer
+    minimum 1
+    maximum sesuai kebutuhan
+
+limit:
+    integer
+    minimum 1
+    maksimum misalnya 50/100
+
+search:
+    panjang maksimum
+
+slug:
+    format yang diizinkan
+
+url:
+    validasi khusus + allowlist
+
+
+============================================================
+15. CONCURRENCY CONTROL
+============================================================
+
+Scraper jangan membuat request tanpa batas.
+
+Misalnya user meminta banyak chapter sekaligus:
+
+    100 chapter
+        |
+        +-- jangan fetch 100 sekaligus
+        |
+        +-- gunakan concurrency terbatas
+
+
+Rekomendasi awal:
+    concurrency 3-5
+
+Nilai harus disesuaikan dengan source.
+
+
+============================================================
+16. CACHE POLICY
+============================================================
+
+TTL awal:
+
+List:
+    30-60 detik
+
+Search:
+    30-60 detik
+
+Detail:
+    60-300 detik
+
+Genres:
+    beberapa menit sampai jam
+
+Chapter images:
+    hati-hati; jangan cache metadata/image terlalu agresif
+    jika URL berubah/dinamis.
+
+
+============================================================
+17. IMPLEMENTASI YANG DISARANKAN DARI PROTOTYPE
+============================================================
+
+Ambil:
+
+[WAJIB]
+- timeout
+- cache
+- normalization
+- pagination
+- URL sanitization
+- decrypt separation
+- test
+- secret extraction/configuration
+
+[DISARANKAN]
+- retry terbatas
+- structured error handling
+- helper HTTP
+- helper parser
+- helper security
+
+[JANGAN COPY MENTAH]
+- seluruh project
+- controller
+- frontend
+- konfigurasi server
+- image proxy tanpa hardening
+
+
+============================================================
+18. PRIORITAS IMPLEMENTASI
+============================================================
+
+P0 - SECURITY
+
+1. Hardening image proxy
+2. SSRF protection
+3. rate limiting
+4. timeout
+5. response size limit
+
+
+P1 - SCRAPER CORE
+
+6. Upgrade scraper
+7. Upgrade Neko scraper
+8. decrypt module
+9. normalization
+10. pagination
+
+
+P2 - PERFORMANCE
+
+11. cache
+12. concurrency control
+13. retry/backoff
+
+
+P3 - QUALITY
+
+14. unit tests
+15. integration tests
+16. logging
+17. CI
+
+
+============================================================
+19. HASIL AKHIR YANG DIHARAPKAN
+============================================================
+
+Setelah migrasi:
+
+    User
+      |
+      v
+    Express
+      |
+      +--> Rate Limit
+      |
+      +--> Validation
+      |
+      v
+    Controller
+      |
+      v
+    Scraper Service
+      |
+      +--> Cache
+      |
+      +--> Timeout
+      |
+      +--> Retry
+      |
+      +--> HTTP
+      |
+      v
+    Source API
+      |
+      v
+    Decrypt
+      |
+      v
+    Normalize
+      |
+      v
+    Application Response
+      |
+      v
+    Frontend
+
+
+============================================================
+20. DEFINITION OF DONE
+============================================================
+
+Migrasi dianggap selesai jika:
+
+[ ] Semua fungsi scraper lama tetap bekerja.
+[ ] Frontend lama tidak rusak.
+[ ] Search tetap bekerja.
+[ ] Pagination tetap bekerja.
+[ ] Detail manga tetap bekerja.
+[ ] Chapter tetap bekerja.
+[ ] Neko scraper tetap bekerja.
+[ ] Image proxy tetap bekerja.
+[ ] Image proxy sudah dilindungi SSRF.
+[ ] Semua scraper mempunyai timeout.
+[ ] Cache bekerja.
+[ ] Data source dinormalisasi.
+[ ] Input divalidasi.
+[ ] Error internal tidak dibocorkan ke client.
+[ ] Rate limiting aktif.
+[ ] Retry terbatas.
+[ ] Concurrency dikontrol.
+[ ] Unit test tersedia.
+[ ] Integration test tersedia.
+[ ] Tidak ada secret sensitif di repository.
+[ ] CI menjalankan test.
+
+
+============================================================
+21. REKOMENDASI AKHIR
+============================================================
+
+Jangan melakukan rewrite total.
+
+Strategi terbaik:
+
+    Scrapper-manga
+        |
+        +-- pertahankan aplikasi
+        |
+        +-- pertahankan frontend
+        |
+        +-- pertahankan controller
+        |
+        +-- upgrade scraper core
+        |
+        +-- adopsi security prototype
+        |
+        +-- adopsi timeout
+        |
+        +-- adopsi cache
+        |
+        +-- adopsi normalization
+        |
+        +-- adopsi pagination
+        |
+        +-- adopsi testing
+        |
+        +-- harden image proxy
+        |
+        +-- tambahkan rate limit
+        |
+        +-- tambahkan concurrency control
+
+
+KESIMPULAN:
+
+Prototype terbaru sebaiknya dijadikan basis scraping engine generasi
+baru untuk Scrapper-manga.
+
+Namun jangan copy-paste seluruh repository.
+
+Ambil konsep dan implementasi scraper yang lebih baik, kemudian
+adaptasikan ke interface dan arsitektur aplikasi lama.
+
+Prioritas paling penting bukan hanya membuat scraper lebih cepat,
+tetapi memastikan:
+
+    reliability
+    security
+    performance
+    maintainability
+    compatibility
+
+
+============================================================
+22. CATATAN IMPLEMENTASI KODE
+============================================================
+
+Saat mulai mengerjakan migrasi, urutan praktis yang disarankan:
+
+1. Buat branch upgrade-scraper.
+2. Backup/commit kondisi stabil.
+3. Salin prototype sebagai referensi, bukan sebagai replacement.
+4. Buat http.js dengan timeout.
+5. Buat cache.js.
+6. Buat normalize.js.
+7. Gabungkan security.js.
+8. Pisahkan decrypt.js.
+9. Migrasikan scraper Doujin.
+10. Migrasikan scraper Neko.
+11. Buat compatibility mapping.
+12. Hubungkan controller lama ke scraper baru.
+13. Hardening image proxy.
+14. Tambahkan rate limit.
+15. Tambahkan concurrency limit.
+16. Tambahkan test.
+17. Jalankan integration test.
+18. Baru hapus kode scraper lama yang sudah tidak digunakan.
+
+
+============================================================
+23. CATATAN PENTING
+============================================================
+
+Dokumen ini adalah blueprint migrasi.
+
+Implementasi final harus disesuaikan dengan kondisi source website,
+struktur response terbaru, versi Node.js, dan kebutuhan deployment.
+
+Jangan menganggap nama endpoint, field API, secret, HTML selector,
+atau URL source akan selalu permanen.
+
+Scraper harus dibuat mudah diperbaiki ketika source berubah.
+
+
+============================================================
+END OF DOCUMENT
+============================================================

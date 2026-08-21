@@ -1,35 +1,18 @@
-# Doujin Library
+# Manga Scraper Platform (Scrapper-manga)
 
-A personal manga library and reader web application designed for managing, exploring, and reading manga with a modern dark-themed interface.
-
-This project is currently in the early stages of development and serves as a platform for learning and experimenting with web scraping, API design, and frontend optimization.
+A web application that aggregates and serves manga/doujin content by scraping and normalizing data from external sources, presenting it through a browsable library, search, detail view, robust chapter reader, and server-side reading position tracking.
 
 ---
 
-## Preview
+## Preview & Features
 
-Doujin Library currently provides:
-- Manga catalog browsing
-- Manga detail pages
-- Personal library management
-- Manga reader with lazy loading
-- Bookmark and favorite system
-- Individual image error handling and retry
-
----
-
-## Features
-
-### Manga Library
-Manage your personal collection with:
-- **Favorite Manga** — Add, remove, and display your favorites.
-- **Bookmark Manga** — Save manga for later and access them from the library page.
-- **Library Search** — Scope-limited search specifically for your saved favorites and bookmarks.
-
-### Manga Reader
-A primary focus of this project, featuring:
-- **Lazy Loading** — Pages load dynamically as you scroll to improve performance and bandwidth usage.
-- **Image Error Handling** — Individual page failures do not affect the chapter; retry only the failed images.
+The platform provides:
+- **Manga Catalog & All Manga Page** — Full library browse with server-side numeric pagination (`PREVIOUS / NEXT`), sorting controls (Newest / Rating / Title A–Z), and category/genre filtering.
+- **Manga Detail Pages** — Comprehensive view with chapter lists, metadata, and error/retry handling.
+- **Manga Reader** — Lazy loading, chapter navigation, and automatic **server-side reading position saving** (powered by built-in `node:sqlite`).
+- **Personal Library & Bookmarks** — Local storage integration for favorites and bookmarks.
+- **Security & Hardening** — Robust image proxy with domain allowlists, private-IP blocking (SSRF protection), response size capping (10MB), content-type validation, request timeouts (AbortController, 12s), in-memory TTL caching, and strict rate limiting.
+- **Testing & Quality** — Fully tested codebase with 87 unit and integration tests (Vitest) and structured Pino logging.
 
 ---
 
@@ -38,41 +21,26 @@ A primary focus of this project, featuring:
 ```text
 /
 ├── .agents/             # Agent/automation configs
-├── controllers/         # Request handlers and business logic
-├── lib/                 # Shared utilities and helper modules
+├── controllers/         # Request handlers (mangaController, nekoController, progressController)
+├── lib/                 # Scraper core, security, caching, db, validator, browser
+├── middleware/          # Rate limiting, error handling
 ├── routes/              # API and page route definitions
-├── website/             # Frontend assets
-│   ├── doujinPage/
-│   │   ├── html/
-│   │   ├── css/
-│   │   └── js/
-│   └── nekoPage/        # Neko Videos (paused feature)
-│       ├── css/
-│       └── html/
-├── node_modules/        # Installed dependencies (generated, not tracked)
-├── package.json         # Dependencies
+├── website/             # Frontend assets (doujinPage/, nekoPage/)
+├── manga-scraper-docs/  # Comprehensive project documentation & decision log
+├── data/                # SQLite database for reading positions
+├── package.json         # Dependencies & scripts
 ├── server.js            # Main application server
 └── .env.example         # Environment configuration
 ```
 
 ---
 
-## Roadmap
+## Roadmap & Status
 
-**Phase 1: Reader Improvement**
-- [ ] Improve retry image UX and loading states.
-- [ ] Implement image preloading for next pages.
-- [ ] Reading progress indicator and position saving.
-
-**Phase 2: Personal Library Enhancement**
-- [ ] Continue Reading feature.
-- [ ] Reading history and last-opened chapter tracking.
-
-**Phase 3: Recommendation System**
-- [ ] Personalized recommendations based on bookmarks and history.
-
-**Phase 4: Account System**
-- [ ] User authentication and cloud synchronization.
+- [x] **Phase 1: Reader & Pagination Enhancement** — Numeric pagination, sorting, category filtering, explicit UI states, and server-side reading position tracking (`node:sqlite`). *(Completed)*
+- [x] **Phase 2: Scraper Engine Migration & Security Hardening** — SSRF protection, image proxy limits, request timeouts, caching, input validation, and comprehensive Vitest test suite (87 tests passing). *(Completed)*
+- [ ] **Phase 3: Recommendation System** — Personalized recommendations based on bookmarks and history.
+- [ ] **Phase 4: Account System** — User authentication and cloud synchronization.
 
 ---
 

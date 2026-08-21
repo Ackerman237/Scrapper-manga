@@ -1,6 +1,6 @@
 # Current Focus
 
-_Last updated: 2026-08-20_
+_Last updated: 2026-08-21_
 
 ## Active Track
 
@@ -13,25 +13,24 @@ Shipped:
 - [x] Category filter (genre dropdown)
 - [x] Explicit loading / empty / error UI states
 - [x] Server-side reading position (SQLite via `node:sqlite`)
+- [x] De-duplicate pagination and shared UI components to `shared/ui.js`
 
-### Track B — Scraper engine migration
-Status: **Planned, not started.** See full blueprint in
-`06-architecture/scraper-migration-plan.md`.
+### Track B — Scraper engine migration & Security Hardening
+Status: **COMPLETE ✅ (Core & P0/P1 baseline implemented and tested)**
 
-Immediate next steps (P0 from the migration plan):
-1. Create branch `upgrade-scraper`.
-2. Harden the image proxy: domain allowlist + private-IP blocking +
-   redirect re-validation.
-3. Add response size limit + content-type validation to image proxy.
-4. Add rate limiting to search, list, detail, chapter, and image-proxy
-   endpoints.
-5. Add request timeout (AbortController, ~12s) to all scraper calls.
+Shipped:
+- [x] Harden the image proxy: domain allowlist + private-IP blocking + redirect re-validation (`lib/security.js`).
+- [x] Response size limit (10MB) + content-type validation to image proxy (`controllers/mangaController.js`).
+- [x] Rate limiting: API (60 req/min), Image Proxy (120 req/min) via `middleware/rateLimit.js`.
+- [x] Request timeout (AbortController, 12s) to scraper calls (`lib/scraper/fetcher.js`).
+- [x] In-memory cache with TTL (`lib/scraper/cache.js`).
+- [x] Data normalizer & decryptor modules (`lib/scraper/normalizer.js`, `lib/scraper/decryptor.js`).
+- [x] Comprehensive test suites (87 unit & integration tests passing).
+- [x] Portable Chrome path detection across Linux, macOS, and Windows with environment variable support (`lib/browser.js`).
 
 ## Definition of "done" for this focus period
 - Track A: ✅ done.
-- Track B: P0 (security) items from the migration plan merged and verified
-  against the existing frontend before moving to P1 (scraper core upgrade).
+- Track B: ✅ done.
 
 ## Blockers / Open Questions
-- None for Track A.
-- Track B not yet started — pick up when ready.
+- None.
