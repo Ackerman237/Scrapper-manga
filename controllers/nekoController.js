@@ -15,6 +15,10 @@ export const getNekoList = async (req, res) => {
     const data = await scrapeNekoList(page);
     return res.json({ success: true, data });
   } catch (err) {
+    logger.error({ err }, 'getNekoList error');
+    if (err?.message?.includes('HTTP 404')) {
+      return res.status(404).json({ success: false, message: 'Video tidak ditemukan' });
+    }
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -29,6 +33,10 @@ export const getNekoCategory = async (req, res) => {
     const data = await scrapeNekoCategory(category, page);
     return res.json({ success: true, data });
   } catch (err) {
+    logger.error({ err }, 'getNekoCategory error');
+    if (err?.message?.includes('HTTP 404')) {
+      return res.status(404).json({ success: false, message: 'Category tidak ditemukan' });
+    }
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -43,6 +51,10 @@ export const getNekoSearch = async (req, res) => {
     const data = await scrapeNekoSearch(query, page);
     return res.json({ success: true, data });
   } catch (err) {
+    logger.error({ err }, 'getNekoSearch error');
+    if (err?.message?.includes('HTTP 404')) {
+      return res.status(404).json({ success: false, message: 'Hasil pencarian tidak ditemukan' });
+    }
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -56,6 +68,10 @@ export const getNekoDetail = async (req, res) => {
     const data = await scrapeNekoDetail(slug);
     return res.json({ success: true, data });
   } catch (err) {
+    logger.error({ err }, 'getNekoDetail error');
+    if (err?.message?.includes('HTTP 404')) {
+      return res.status(404).json({ success: false, message: 'Video tidak ditemukan' });
+    }
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -65,6 +81,7 @@ export const getNekoCategories = async (_req, res) => {
     const data = await scrapeNekoCategories();
     return res.json({ success: true, data });
   } catch (err) {
+    logger.error({ err }, 'getNekoCategories error');
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -74,6 +91,19 @@ export const proxyNekoPlayer = async (req, res) => {
   try {
     const url = validateUrl(req.query.url);
     if (!url) return res.status(400).json({ success: false, message: 'Parameter url tidak valid' });
+
+    // SSRF guard: hanya izinkan host yang terdaftar
+    try {
+      const parsed = new URL(url);
+      const allowedHosts = (process.env.NEKO_PLAYER_HOSTS || 'playmogo.com,yandex.ru')
+        .split(',')
+        .map((h) => h.trim());
+      if (!allowedHosts.some((allowed) => parsed.hostname === allowed || parsed.hostname.endsWith(`.${allowed}`))) {
+        return res.status(400).json({ success: false, message: 'URL player tidak diizinkan' });
+      }
+    } catch {
+      // Jika URL tidak parseable, lanjutkan (tapi masih akan gagal di puppeteer)
+    }
 
     page = await newPage();
 
@@ -104,6 +134,13 @@ export const proxyNekoPlayer = async (req, res) => {
   } catch (err) {
     if (page) await page.close();
     logger.error({ err }, 'proxyNekoPlayer error');
-    res.status(500).json({ success: false, message: 'Gagal memuat player' });
+    // Distinguish error types for better client messages
+    if (err?.message?.includes('Timeout')) {
+      return res.status(504).json({ success: false, message: 'Timeout menunggu player' });
+    }
+    if (err?.message?.includes('Performing security verification')) {
+      return res.status(502).json({ success: false, message: 'Verifikasi keamanan gagal, coba lagi' });
+    }
+    return res.status(500).json({ success: false, message: 'Gagal memuat player' });
   }
 };

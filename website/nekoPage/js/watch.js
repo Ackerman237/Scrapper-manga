@@ -40,9 +40,10 @@ async function loadDetail() {
           externalPlayerBtn.href = playerUrl;
           externalFallbackContainer.style.display = 'block';
 
+          // Gunakan proxy-player agar tidak diblokir Cloudflare
           playerBox.innerHTML = `
             <iframe
-              src="${playerUrl}"
+              src="/api/neko/proxy-player?url=${encodeURIComponent(playerUrl)}"
               sandbox="allow-scripts allow-same-origin allow-presentation"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
@@ -58,7 +59,7 @@ async function loadDetail() {
       externalFallbackContainer.style.display = 'block';
       playerBox.innerHTML = `
         <iframe
-          src="${firstUrl}"
+          src="/api/neko/proxy-player?url=${encodeURIComponent(firstUrl)}"
           sandbox="allow-scripts allow-same-origin allow-presentation"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen

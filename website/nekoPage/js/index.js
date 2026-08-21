@@ -46,7 +46,8 @@ async function loadCategories() {
     allBtn.textContent = 'ALL';
     allBtn.addEventListener('click', () => {
       currentCategory = '';
-      currentOffset = 0;
+      currentOffset = 1; // mulai dari halaman 1 (page 1 = '/')
+      currentQuery = '';
       container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
       allBtn.classList.add('active');
       loadVideos(true);
@@ -56,10 +57,12 @@ async function loadCategories() {
     result.data.forEach(cat => {
       const btn = document.createElement('button');
       btn.className = 'category-btn';
-      btn.textContent = cat.name || cat;
+      // Gunakan slug untuk endpoint backend, tampilkan name di UI
+      currentCategory = cat.slug; // <-- perbaikan: gunakan slug, bukan name
+      btn.textContent = cat.name || cat.slug;
       btn.addEventListener('click', () => {
-        currentCategory = cat.name || cat;
-        currentOffset = 0;
+        currentCategory = cat.slug; // <-- perbaikan
+        currentOffset = 1; // reset ke halaman 1
         container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         loadVideos(true);
@@ -79,14 +82,20 @@ async function loadVideos(reset = false) {
   if (!grid) return;
 
   if (reset) {
-    currentOffset = 0;
+    currentOffset = 1; // mulai dari halaman 1
     grid.innerHTML = '';
   }
 
   try {
-    let endpoint = `/api/neko?page=${currentOffset}`;
-    if (currentCategory) endpoint += `&category=${encodeURIComponent(currentCategory)}`;
-    if (currentQuery) endpoint += `&query=${encodeURIComponent(currentQuery)}`;
+    // Determin endpoint berdasarkan filter yang aktif
+    let endpoint;
+    if (currentCategory) {
+      endpoint = `/api/neko/category?category=${encodeURIComponent(currentCategory)}&page=${currentOffset}`;
+    } else if (currentQuery) {
+      endpoint = `/api/neko/search?query=${encodeURIComponent(currentQuery)}&page=${currentOffset}`;
+    } else {
+      endpoint = `/api/neko?page=${currentOffset}`;
+    }
 
     const res = await fetch(endpoint);
     const result = await res.json();
@@ -96,7 +105,7 @@ async function loadVideos(reset = false) {
 
     if (reset) grid.innerHTML = '';
 
-    if (videos.length === 0 && currentOffset === 0) {
+    if (videos.length === 0 && currentOffset === 1) {
       grid.innerHTML = '<p class="error">Tidak ada video ditemukan.</p>';
       if (loadMoreBtn) loadMoreBtn.style.display = 'none';
       return;
@@ -114,7 +123,7 @@ async function loadVideos(reset = false) {
       grid.appendChild(renderVideoCard(video));
     });
 
-    currentOffset++;
+    currentOffset++; // naik ke halaman selanjutnya
 
     if (loadMoreBtn) {
       loadMoreBtn.style.display = videos.length > 0 ? 'block' : 'none';
