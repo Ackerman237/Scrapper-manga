@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import net from 'net';
 import apiRoutes from './routes/api.js';
 import logger from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
@@ -9,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 4000;
 
 // 1. Middleware
 app.use(express.json());
@@ -39,11 +40,46 @@ app.use(notFoundHandler);
 // 5. Error handler
 app.use(errorHandler);
 
-// 6. Jalankan Server
+// 6. Jalankan Server dengan Fallback Port Otomatis
+function listenWithFallback(initialPort, maxAttempts = 5) {
+  let currentPort = initialPort;
+  let attempts = 0;
+
+  const tryListen = () => {
+    const tester = net.createServer();
+
+    tester.once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        attempts++;
+        if (attempts < maxAttempts) {
+          currentPort++;
+          tryListen();
+        } else {
+          logger.error({ initialPort, maxAttempts }, `Semua port dari ${initialPort} hingga ${currentPort} sibuk.`);
+          process.exit(1);
+        }
+      } else {
+        logger.error(err, 'Kesalahan saat memeriksa port server.');
+        process.exit(1);
+      }
+    });
+
+    tester.once('listening', () => {
+      tester.close(() => {
+        app.listen(currentPort, () => {
+          logger.info({ port: currentPort }, `Server berjalan di http://localhost:${currentPort}`);
+        });
+      });
+    });
+
+    tester.listen(currentPort);
+  };
+
+  tryListen();
+}
+
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    logger.info({ port: PORT }, `Server berjalan di http://localhost:${PORT}`);
-  });
+  listenWithFallback(PORT);
 }
 
 export default app;
