@@ -74,18 +74,27 @@ function saveReadingPosition(data) {
   );
 }
 
-function restoreReadingPosition(imageList, slug, chapterId) {
-  const saved = JSON.parse(localStorage.getItem('readingPosition'));
-  if (!saved) return;
-  if (saved.slug !== slug || saved.chapterId !== chapterId) return;
+function restoreReadingPosition(imageList, slug, chapterId, targetPageOverride = null) {
+  // KNOWN ISSUE: Logika scroll-to-page dinonaktifkan sementara karena menyebabkan gambar
+  // tidak muncul. Saat scrollIntoView dipanggil, IntersectionObserver (lazy load) belum
+  // terdaftar sehingga gambar tidak pernah dimuat. Sistem penyimpanan posisi (localStorage
+  // & server) tetap berjalan normal — hanya bagian restore scroll ke halaman yang dimatikan.
+  // TODO: Aktifkan kembali setelah lazy loading dan scroll restore direfaktor agar urutan
+  // inisialisasi benar (setupLazyImages harus selesai sebelum scroll dilakukan).
 
-  const pages = imageList.querySelectorAll('img');
-  const target = pages[saved.page - 1];
-  if (!target) return;
+  let targetPage = targetPageOverride;
+  if (!targetPage) {
+    const saved = JSON.parse(localStorage.getItem('readingPosition'));
+    if (!saved || saved.slug !== slug || saved.chapterId !== chapterId) return null;
+    targetPage = saved.page;
+  }
 
-  setTimeout(() => {
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 3000);
+  const pages = Array.from(imageList.querySelectorAll('img'));
+  if (targetPage < 1 || targetPage > pages.length) return null;
+
+  // Kembalikan targetPage agar caller tahu posisi tersimpan, tapi JANGAN scroll.
+  // Baca dari atas (halaman 1) agar lazy loading berjalan normal.
+  return targetPage;
 }
 
 // ─── Server-side reading position ─────────────────────────────────────────────

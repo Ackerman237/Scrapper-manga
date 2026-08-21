@@ -6,7 +6,17 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env server.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "vitest run tests/integration.test.js",
+    "test:cache": "vitest run tests/cache.test.js",
+    "test:fetcher": "vitest run tests/fetcher.test.js",
+    "test:security": "vitest run tests/security.test.js",
+    "test:validator": "vitest run tests/validator.test.js",
+    "get-secret": "node --env-file=.env scripts/get-secret.js",
+    "demo": "node --env-file=.env scripts/demo.js",
+    "demo:doujin": "node --env-file=.env scripts/demo.js --doujin-only",
+    "demo:neko": "node --env-file=.env scripts/demo.js --neko-only",
+    "demo:fast": "node --env-file=.env scripts/demo.js --skip-images"
   },
   "dependencies": {
     "express": "^4.22.2",

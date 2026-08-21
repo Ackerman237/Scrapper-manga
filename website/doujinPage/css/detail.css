@@ -186,8 +186,8 @@
 }
 
 .btn-favorite.active {
-    color: #d94b4b;
-    border-color: #d94b4b;
+    color: var(--favorite);
+    border-color: var(--favorite);
 }
 
 .btn-notify {
@@ -465,8 +465,8 @@
 /* State ketika manga sudah masuk dalam daftar Favorite */
 .btn-favorite.is-active {
   background: rgba(229, 62, 62, 0.1);
-  border-color: #e53e3e;
-  color: #e53e3e;
+  border-color: var(--favorite);
+  color: var(--favorite);
 }
 
 .btn-favorite.is-active:hover {
@@ -547,7 +547,7 @@
   height: calc(100vh - 120px);
   overflow: hidden;
   display: block !important;
-  background: #15120f;
+  background: var(--bg);
   min-height: 500px;
 }
 

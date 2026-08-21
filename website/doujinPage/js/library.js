@@ -1,42 +1,7 @@
-// ============================================================
-// library.js — Mengelola Navbar, Back to Top, Favorite, & Bookmark
-// ============================================================
+// library.js — Favorites & Bookmarks library page
 
-(function () {
-  const hamburger = document.getElementById('navHamburger');
-  const navLinks = document.getElementById('navLinks');
-
-  if (!hamburger || !navLinks) return;
-
-  function closeNav() {
-    navLinks.classList.remove('is-open');
-    hamburger.classList.remove('is-active');
-    hamburger.setAttribute('aria-expanded', 'false');
-  }
-
-  function toggleNav() {
-    const isOpen = navLinks.classList.toggle('is-open');
-    hamburger.classList.toggle('is-active', isOpen);
-    hamburger.setAttribute('aria-expanded', String(isOpen));
-  }
-
-  hamburger.addEventListener('click', toggleNav);
-
-  navLinks.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', closeNav);
-  });
-
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 700) closeNav();
-  });
-})();
-
-// ============================================================
-// Logika Render Library (Favorites & Bookmarks)
-// ============================================================
-
-const INITIAL_VISIBLE_COUNT = 6; 
-let librarySearchQuery = ""; 
+const INITIAL_VISIBLE_COUNT = 6;
+let librarySearchQuery = "";
 
 function getStorageData(key) {
   return JSON.parse(localStorage.getItem(key)) || {};
@@ -47,7 +12,7 @@ function removeStorageItem(key, slug) {
   if (data[slug]) {
     delete data[slug];
     localStorage.setItem(key, JSON.stringify(data));
-    renderAllSections(); 
+    renderAllSections();
   }
 }
 
@@ -61,13 +26,11 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
   const dataObj = getStorageData(storageKey);
   let items = Object.values(dataObj);
   if (librarySearchQuery.trim() !== "") {
-  items = items.filter(item => {
-    const title =
-      String(item.title || "")
-      .toLowerCase();
-    return title.includes(librarySearchQuery);
-  });
-}
+    items = items.filter(item => {
+      const title = String(item.title || "").toLowerCase();
+      return title.includes(librarySearchQuery);
+    });
+  }
 
   grid.innerHTML = "";
 
@@ -82,7 +45,7 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
   items.forEach((item, index) => {
     const card = document.createElement("div");
     card.className = "manga-card" + (index >= INITIAL_VISIBLE_COUNT ? " is-hidden" : "");
-    
+
     const coverUrl = item.thumb || "https://placehold.co/180x240?text=No+Cover";
     const title = item.title || "Tanpa Judul";
     const rating = item.rating ? Number(item.rating).toFixed(1) : '-';
@@ -123,18 +86,15 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
     seeMoreBtn.style.display = "block";
     let isExpanded = false;
 
-    // Bersihkan event onclick sebelumnya agar tidak terjadi tumpang tindih
     seeMoreBtn.onclick = () => {
       isExpanded = !isExpanded;
       const allCards = grid.querySelectorAll(".manga-card");
-      
       allCards.forEach((card, idx) => {
         if (idx >= INITIAL_VISIBLE_COUNT) {
           card.classList.toggle("is-hidden", !isExpanded);
           card.classList.toggle("is-revealed", isExpanded);
         }
       });
-
       seeMoreBtn.textContent = isExpanded ? "SHOW LESS ▴" : "SEE MORE ▾";
     };
   } else if (seeMoreBtn) {
@@ -147,10 +107,6 @@ function renderAllSections() {
   renderLibrarySection("bookmarks", "bookmarkGrid", "bookmarkEmpty", "bookmarkSeeMore");
 }
 
-// ============================================================
-// Inisialisasi DOM & Tombol Back to Top (Diperbaiki)
-// ============================================================
-
 document.addEventListener("DOMContentLoaded", () => {
   renderAllSections();
 
@@ -162,19 +118,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Back to Top functionality
-  const backToTopBtn = document.getElementById('backToTop');
-  if (backToTopBtn) {
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 300) {
-        backToTopBtn.classList.add('show');
-      } else {
-        backToTopBtn.classList.remove('show');
-      }
-    });
-
-    backToTopBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
+  setupBackToTop(document.getElementById('backToTop'), 300);
 });

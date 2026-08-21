@@ -61,6 +61,9 @@ export const getMangaDetail = async (req, res) => {
     return res.json({ success: true, data });
   } catch (err) {
     logger.error({ err }, 'getMangaDetail error');
+    if (err?.message === 'HTTP 404') {
+      return res.status(404).json({ success: false, message: 'Manga tidak ditemukan' });
+    }
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
@@ -75,6 +78,9 @@ export const getChapterImages = async (req, res) => {
     return res.json({ success: true, data });
   } catch (err) {
     logger.error({ err }, 'getChapterImages error');
+    if (err?.message === 'HTTP 404') {
+      return res.status(404).json({ success: false, message: 'Chapter tidak ditemukan' });
+    }
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };

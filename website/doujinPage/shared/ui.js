@@ -19,6 +19,10 @@ function formatFetchError(error, fallbackMessage) {
   if (error?.message === 'HTTP 500') return 'Server sedang bermasalah. Coba beberapa saat lagi.';
   if (error?.message === 'HTTP 404') return 'Data tidak ditemukan.';
   if (error?.message === 'HTTP 429') return 'Terlalu banyak request. Tunggu sebentar.';
+  // Pesan error dari upstream yang diteruskan server (bukan kode HTTP langsung)
+  if (/server|bermasalah|kesalahan|upstream|timeout|tidak tersedia/i.test(error?.message || '')) {
+    return 'Server sedang bermasalah. Coba beberapa saat lagi.';
+  }
   return fallbackMessage;
 }
 
@@ -72,6 +76,55 @@ function showEmpty(container, message, btnLabel, onAction) {
     const btn = container.querySelector('.retry-btn');
     if (btn) btn.addEventListener('click', onAction);
   }
+}
+
+function renderPaginationControls({ page, totalPages, hasPrevious, hasNext, onPageChange }) {
+  const pageNumbers = document.getElementById('pageNumbers');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  if (prevBtn) prevBtn.disabled = !hasPrevious;
+  if (nextBtn) nextBtn.disabled = !hasNext;
+  if (!pageNumbers) return;
+
+  pageNumbers.innerHTML = '';
+
+  if (!Number.isFinite(totalPages) || totalPages < 1) totalPages = 1;
+
+  const pages = new Set();
+  pages.add(1);
+  pages.add(totalPages);
+  for (let number = page - 2; number <= page + 2; number++) {
+    if (number >= 1 && number <= totalPages) pages.add(number);
+  }
+
+  const sortedPages = [...pages].sort((a, b) => a - b);
+  let previousNumber = null;
+
+  sortedPages.forEach(number => {
+    if (previousNumber !== null && number - previousNumber > 1) {
+      const ellipsis = document.createElement('span');
+      ellipsis.className = 'page-ellipsis';
+      ellipsis.textContent = '...';
+      pageNumbers.appendChild(ellipsis);
+    }
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'page-number';
+    button.textContent = String(number);
+
+    if (number === page) {
+      button.classList.add('active');
+      button.setAttribute('aria-current', 'page');
+      button.disabled = true;
+    } else if (onPageChange) {
+      button.addEventListener('click', () => onPageChange(number));
+    }
+
+    pageNumbers.appendChild(button);
+    previousNumber = number;
+  });
 }
 
 function getMangaFlag(type) {

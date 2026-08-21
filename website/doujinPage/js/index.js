@@ -129,4 +129,29 @@ document.addEventListener('DOMContentLoaded', () => {
   setupBackToTop(backToTopBtn, 300);
 
   loadManga();
+
+  // Perbaiki cover yang hilang saat kembali dari detail/reader via browser back button (bfcache).
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    const grid = document.getElementById('mangaGrid');
+    if (!grid) return;
+    grid.querySelectorAll('img').forEach((img) => {
+      if (!img.complete || img.naturalWidth === 0) {
+        const currentSrc = img.src;
+        img.src = '';
+        img.src = currentSrc;
+      }
+    });
+    // Juga refresh history carousel covers
+    const historyContainer = document.getElementById('historyContainer');
+    if (historyContainer) {
+      historyContainer.querySelectorAll('img').forEach((img) => {
+        if (!img.complete || img.naturalWidth === 0) {
+          const currentSrc = img.src;
+          img.src = '';
+          img.src = currentSrc;
+        }
+      });
+    }
+  });
 });

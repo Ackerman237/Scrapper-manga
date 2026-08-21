@@ -108,52 +108,10 @@ function goToPage(page) {
   window.location.href = `/doujinPage/html/allManga.html?${params.toString()}`;
 }
 
-function renderPagination({ page, totalPages, hasPrevious, hasNext }) {
-  const pageNumbers = document.getElementById('pageNumbers');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-
-  if (prevBtn) prevBtn.disabled = !hasPrevious;
-  if (nextBtn) nextBtn.disabled = !hasNext;
-  if (!pageNumbers) return;
-
-  pageNumbers.innerHTML = '';
-
-  if (!Number.isFinite(totalPages) || totalPages < 1) totalPages = 1;
-
-  const pages = new Set();
-  pages.add(1);
-  pages.add(totalPages);
-  for (let number = page - 2; number <= page + 2; number++) {
-    if (number >= 1 && number <= totalPages) pages.add(number);
-  }
-
-  const sortedPages = [...pages].sort((a, b) => a - b);
-  let previousNumber = null;
-
-  sortedPages.forEach(number => {
-    if (previousNumber !== null && number - previousNumber > 1) {
-      const ellipsis = document.createElement('span');
-      ellipsis.className = 'page-ellipsis';
-      ellipsis.textContent = '...';
-      pageNumbers.appendChild(ellipsis);
-    }
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'page-number';
-    button.textContent = String(number);
-
-    if (number === page) {
-      button.classList.add('active');
-      button.setAttribute('aria-current', 'page');
-      button.disabled = true;
-    } else {
-      button.addEventListener('click', () => goToPage(number));
-    }
-
-    pageNumbers.appendChild(button);
-    previousNumber = number;
+function renderPagination(pagination) {
+  renderPaginationControls({
+    ...pagination,
+    onPageChange: (newPage) => goToPage(newPage),
   });
 }
 
@@ -213,4 +171,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadGenres();
   loadManga(currentQuery, currentPage, currentSort, currentGenre);
+
+  // Perbaiki cover yang hilang saat kembali dari reader via browser back button (bfcache).
+  // Saat halaman di-restore dari bfcache, gambar dengan loading="lazy" yang belum masuk
+  // viewport tidak diload ulang oleh browser. Solusi: paksa re-trigger src pada gambar
+  // yang gagal atau belum selesai dimuat.
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return; // hanya jalankan kalau restore dari bfcache
+    const grid = document.getElementById('mangaGrid');
+    if (!grid) return;
+    grid.querySelectorAll('img').forEach((img) => {
+      // Gambar dianggap gagal jika belum complete atau naturalWidth = 0 (blank/error)
+      if (!img.complete || img.naturalWidth === 0) {
+        const currentSrc = img.src;
+        img.src = '';
+        img.src = currentSrc;
+      }
+    });
+  });
 });

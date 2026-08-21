@@ -327,6 +327,25 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = `/doujinPage/html/allManga.html?${params.toString()}`;
     });
   }
+
+  // Perbaiki cover yang hilang saat kembali dari reader via browser back button (bfcache).
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    const coverImg = el("coverImg");
+    const coverFrame = el("coverFrame");
+    if (coverImg && (!coverImg.complete || coverImg.naturalWidth === 0)) {
+      const currentSrc = coverImg.src;
+      coverImg.src = '';
+      coverImg.src = currentSrc;
+    }
+    if (coverFrame) {
+      const bgImage = coverFrame.style.backgroundImage;
+      if (bgImage && bgImage !== 'none' && bgImage !== 'url("")') {
+        coverFrame.style.backgroundImage = '';
+        coverFrame.style.backgroundImage = bgImage;
+      }
+    }
+  });
 });
 
 function cleanSynopsis(raw) {

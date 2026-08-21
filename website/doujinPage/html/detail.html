@@ -6,6 +6,8 @@
   <title>Detail Manga — Doujin Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="/doujinPage/css/base.css">
+  <link rel="stylesheet" href="/doujinPage/css/components.css">
+  <link rel="stylesheet" href="/doujinPage/css/cards.css">
   <link rel="stylesheet" href="/doujinPage/css/detail.css">
 </head>
 
@@ -15,12 +17,13 @@
   <header>
     <div class="nav-container">
       <div class="brand">
-        <a href="/">
+        <a href="/doujinPage/html/index.html">
           <h1>Doujin Library</h1>
         </a>
       </div>
 
       <nav class="nav-links" id="navLinks">
+        <a href="/nekoPage/html/">NEKO VIDEO</a>
         <a href="/doujinPage/html/index.html">HOME</a>
         <a href="/doujinPage/html/allManga.html">ALL</a>
         <a href="/doujinPage/html/categories.html">CATEGORIES</a>
@@ -48,13 +51,10 @@
   <main>
     <div id="detailContainer">
 
-      <!-- State loading -->
       <p class="loading" id="detailLoading">Memuat detail manga...</p>
 
-      <!-- Layout utama -->
       <div class="detail-layout hidden" id="detailLayout" style="display:none;">
 
-        <!-- ================= KOLOM KIRI: COVER ================= -->
         <aside class="detail-cover-card">
           <div class="detail-cover-frame" id="coverFrame" style="background-image:url('');">
             <img id="coverImg" src="" alt="Cover">
@@ -77,7 +77,6 @@
             📖 READ NOW
           </button>
 
-          <!-- Bagian Secondary Row (Bookmark & Favorite) -->
           <div class="detail-secondary-row">
             <button class="btn-bookmark" id="bookmarkBtn" type="button">🔖 BOOKMARK</button>
             <button class="btn-favorite" id="favoriteBtn" type="button">❤️ FAVORITE</button>
@@ -92,14 +91,12 @@
           </div>
         </aside>
 
-        <!-- ================= KOLOM TENGAH: INFO + SYNOPSIS ================= -->
         <div class="detail-main">
           <div class="detail-tabs">
             <button class="detail-tab active" id="tabInfo" type="button">📖 Detail Info</button>
             <button class="detail-tab" id="tabMoreSeries" type="button">👍 More Series</button>
           </div>
 
-          <!-- panel: Series Information -->
           <section class="panel">
             <h3 class="panel-title"><span class="icon">ⓘ</span> Series Information</h3>
 
@@ -109,44 +106,36 @@
                   <div class="info-row-label">TYPE</div>
                   <div class="info-row-value"><span id="infoTypeFlag">🇰🇷</span> <span id="infoType">—</span></div>
                 </div>
-
                 <div>
                   <div class="info-row-label">STATUS</div>
                   <div class="info-row-value" style="color:var(--ink);">⟳ <span id="infoStatus">—</span></div>
                 </div>
-
                 <div>
                   <div class="info-row-label">ALTERNATIVE TITLES</div>
                   <div class="info-row-value" id="infoAltTitles" style="font-weight:400;">—</div>
                 </div>
-
                 <div>
                   <div class="info-row-label">AUTHORS</div>
                   <div class="info-row-value" id="infoAuthors">—</div>
                 </div>
-
                 <div>
                   <div class="info-row-label">GROUPS</div>
                   <div class="info-row-value" id="infoGroups">N/A</div>
                 </div>
-
                 <div>
                   <div class="info-row-label">SERIES</div>
                   <div class="info-row-value" id="infoSeries">—</div>
                 </div>
-
                 <div>
                   <div class="info-row-label">SERIALIZATION</div>
                   <div class="info-row-value" id="infoSerialization">—</div>
                 </div>
-
                 <div>
                   <div class="info-row-label">CHARACTERS</div>
                   <div class="info-row-value" id="infoCharacters">N/A</div>
                 </div>
               </div>
 
-              <!-- rating box kanan -->
               <div class="rating-box">
                 <div class="rating-main">
                   <div class="rating-score" id="ratingScore">0.0</div>
@@ -159,14 +148,12 @@
               </div>
             </div>
 
-            <!-- genre full width, terpisah dari grid supaya tag bisa napas -->
             <div class="genre-section">
               <div class="info-row-label">GENRES</div>
-              <div class="genre-tags" id="genreTags"><!-- genre-tag diisi JS --></div>
+              <div class="genre-tags" id="genreTags"></div>
             </div>
           </section>
 
-          <!-- panel: Synopsis -->
           <section class="panel">
             <h3 class="panel-title"><span class="icon">☰</span> Synopsis</h3>
             <p class="synopsis-text" id="synopsisText">—</p>
@@ -174,7 +161,6 @@
           </section>
         </div>
 
-        <!-- ================= KOLOM KANAN: CHAPTER LIST ================= -->
         <aside class="chapter-sidebar">
           <section class="panel chapter-panel">
             <div class="chapter-panel-head">
@@ -188,9 +174,7 @@
               </div>
             </div>
 
-            <div class="chapter-list-detail" id="chapterList">
-              <!-- chapter-row diisi JS -->
-            </div>
+            <div class="chapter-list-detail" id="chapterList"></div>
           </section>
         </aside>
 
@@ -202,7 +186,10 @@
 
   <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
 
-  <!-- <script src="/doujinPage/js/nav.js" defer></script> -->
+  <script src="/doujinPage/shared/nav.js" defer></script>
+  <script src="/doujinPage/shared/api.js" defer></script>
+  <script src="/doujinPage/shared/ui.js" defer></script>
+  <script src="/doujinPage/shared/storage.js" defer></script>
   <script src="/doujinPage/js/detail.js" defer></script>
 </body>
 </html>

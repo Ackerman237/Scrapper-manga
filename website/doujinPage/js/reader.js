@@ -25,31 +25,33 @@ function setupLazyImages(container) {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
         const img = entry.target;
-        img.src = img.dataset.src;
-        img.removeAttribute('data-src');
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+        }
         observer.unobserve(img);
       });
-    }, { rootMargin: '400px 0px' });
+    }, { rootMargin: '600px 0px' });
 
     images.forEach((img) => observer.observe(img));
     return;
   }
 
   images.forEach((img) => {
-    img.src = img.dataset.src;
-    img.removeAttribute('data-src');
+    if (img.dataset.src) {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    }
   });
 }
 
-function preloadNextImages(container, count = 2) {
-  const images = Array.from(container.querySelectorAll('img[data-src]'));
+function loadInitialPages(container, count = 10) {
+  const images = Array.from(container.querySelectorAll('img'));
   images.slice(0, count).forEach((img) => {
-    const src = img.dataset.src;
-    if (!src) return;
-    const preload = new Image();
-    preload.onload = () => console.log("Preloaded:", src);
-    preload.onerror = () => console.warn("Preload gagal:", src);
-    preload.src = src;
+    if (img.dataset.src) {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    }
   });
 }
 
@@ -70,16 +72,34 @@ function setupReadingProgress(imageList, totalPages, readingData) {
 
   const pages = Array.from(imageList.querySelectorAll('img'));
 
-  // debounce server save — kirim paling cepat setiap 3 detik
+  // Simpan ke localStorage secara langsung + kirim server via debounce
   let saveTimer = null;
-  function scheduleSave(page) {
+  let currentPageIndex = 1;
+
+  function handlePageVisible(page) {
+    currentPageIndex = page;
+    const data = { ...readingData, page };
+    saveReadingPosition(data); // Instan simpan ke localStorage
+
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      const data = { ...readingData, page };
-      saveReadingPosition(data);
       saveProgressToServer(data);
     }, 3000);
   }
+
+  // Simpan saat pengguna meninggalkan halaman / tab di-minimize
+  const saveOnExit = () => {
+    if (currentPageIndex > 0) {
+      const data = { ...readingData, page: currentPageIndex };
+      saveReadingPosition(data);
+      saveProgressToServer(data);
+    }
+  };
+
+  window.addEventListener('beforeunload', saveOnExit);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveOnExit();
+  });
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -88,10 +108,10 @@ function setupReadingProgress(imageList, totalPages, readingData) {
       if (index >= 0) {
         const page = index + 1;
         progress.textContent = `Page ${page} / ${totalPages}`;
-        scheduleSave(page);
+        handlePageVisible(page);
       }
     });
-  }, { threshold: 0.5 });
+  }, { threshold: 0.1, rootMargin: '0px 0px -10% 0px' });
 
   pages.forEach(img => observer.observe(img));
   return progress;
@@ -487,8 +507,21 @@ async function loadChapter() {
 
   container.innerHTML = '<p class="loading">Memuat chapter...</p>';
 
+  // Fungsi helper: retry fetch sekali lagi setelah delay singkat jika kena error server
+  async function fetchChapterWithRetry(id) {
+    try {
+      return await fetchChapter(id);
+    } catch (err) {
+      // Retry sekali setelah 1.5 detik untuk error server sementara (500/upstream timeout)
+      const isServerError = err?.message !== 'HTTP 404' && err?.name !== 'AbortError';
+      if (!isServerError) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return await fetchChapter(id);
+    }
+  }
+
   try {
-    const chapterData = await fetchChapter(chapterId);
+    const chapterData = await fetchChapterWithRetry(chapterId);
     const mangaSlug = chapterData.mangaSlug || chapterData.manga_slug || '';
 
     let mangaDetail = null;
@@ -552,8 +585,9 @@ async function loadChapter() {
           `;
           const retryBtn = errorBox.querySelector('button');
           retryBtn.addEventListener('click', () => {
+            img.removeAttribute('data-src');
+            img.src = `${imageUrl}&t=${Date.now()}`;
             errorBox.replaceWith(img);
-            img.src = imageUrl;
           });
           img.replaceWith(errorBox);
         };
@@ -581,8 +615,29 @@ async function loadChapter() {
     imageList.appendChild(endSentinel);
 
     container.appendChild(imageList);
+
+    // 1. Restore posisi dari localStorage (sekarang hanya membaca posisi, tidak scroll)
+    let restoredPage = restoreReadingPosition(imageList, mangaSlug, chapterId);
+
+    // 2. Ambil progres dari server secara background (asinkron) untuk sinkronisasi cross-device
+    if (mangaSlug) {
+      fetchProgressFromServer(mangaSlug).then((serverPos) => {
+        if (serverPos && serverPos.chapter_id === chapterId && serverPos.page > 1) {
+          // Jika server punya posisi yang lebih baru / berbeda, sesuaikan jika belum di-restore
+          const currentSaved = JSON.parse(localStorage.getItem('readingPosition') || '{}');
+          if (!currentSaved.page || serverPos.page > currentSaved.page) {
+            restoreReadingPosition(imageList, mangaSlug, chapterId, serverPos.page);
+          }
+        }
+      }).catch(() => {});
+    }
+
+    // 3. Muat lebih banyak halaman awal (10 halaman pertama) secara langsung agar IntersectionObserver
+    //    tidak gagal memicu halaman berikutnya di awal scroll (mencegah layar blank/mulai dari halaman 4).
+    loadInitialPages(imageList, 10);
+
+    // 4. Daftarkan sisa gambar ke lazy loading (IntersectionObserver)
     setupLazyImages(imageList);
-    preloadNextImages(imageList);
 
     const chapterNum = chapterData.number ?? chapterData.chapter ?? null;
     setupReadingProgress(imageList, imageUrls.length, {
@@ -590,16 +645,6 @@ async function loadChapter() {
       chapterId: chapterId,
       chapterNum: chapterNum,
     });
-
-    // Restore posisi: coba server dulu, fallback localStorage
-    const serverPos = mangaSlug ? await fetchProgressFromServer(mangaSlug) : null;
-    if (serverPos && serverPos.chapter_id === chapterId && serverPos.page > 1) {
-      const pages = imageList.querySelectorAll('img');
-      const target = pages[serverPos.page - 1];
-      if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 1500);
-    } else {
-      restoreReadingPosition(imageList, mangaSlug, chapterId);
-    }
 
     const goNext = () => {
       if (!nextChapter) return;
@@ -699,7 +744,20 @@ async function loadChapter() {
   } catch (err) {
     console.error(err);
     container.className = 'error';
-    container.textContent = formatFetchError(err, 'Gagal memuat gambar chapter.');
+    const errMsg = formatFetchError(err, 'Gagal memuat gambar chapter.');
+    container.innerHTML = `
+      <div class="state-box">
+        <p class="error">${errMsg}</p>
+        <button type="button" class="retry-btn">COBA LAGI</button>
+      </div>
+    `;
+    const retryBtn = container.querySelector('.retry-btn');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        container.innerHTML = '';
+        loadChapter();
+      });
+    }
   }
 }
 

@@ -85,7 +85,7 @@ describe('validateSlug', () => {
     expect(validateSlug('')).toBeNull();
   });
 
-  it('returns null for special chars', () => {
+  it('returns null for special chars like slash', () => {
     expect(validateSlug('manga/title')).toBeNull();
   });
 

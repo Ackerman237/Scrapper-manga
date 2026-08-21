@@ -6,6 +6,8 @@
   <title>Library & Bookmarks — Doujin Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="/doujinPage/css/base.css">
+  <link rel="stylesheet" href="/doujinPage/css/components.css">
+  <link rel="stylesheet" href="/doujinPage/css/cards.css">
   <link rel="stylesheet" href="/doujinPage/css/library.css">
 </head>
 <body>
@@ -27,56 +29,50 @@
         <a href="/doujinPage/html/account.html">ACCOUNT</a>
       </nav>
 
+      <form id="searchForm" class="search-box">
+        <input type="text" id="searchInput" placeholder="Cari judul komik...">
+        <button type="submit">CARI</button>
+      </form>
+
       <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks">
         <span></span><span></span><span></span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN & LIBRARY CONTENT -->
   <main class="library-container">
-  <div class="library-header">
-    <h1 class="library-title">
-      My Library
-    </h1>
-    <div class="library-search">
-      <input 
-        type="text" 
-        id="librarySearch"
-        placeholder="Search your library..."
-        autocomplete="off">
+    <div class="library-header">
+      <h1 class="library-title">My Library</h1>
+      <div class="library-search">
+        <input type="text" id="librarySearch" placeholder="Search your library..." autocomplete="off">
+      </div>
     </div>
-  </div>
 
-    <!-- SECTION: FAVORITE MANGA -->
     <section class="library-section">
       <div class="section-header">
         <h2>❤️ Favorite Manga</h2>
       </div>
-      <div class="manga-grid" id="favoriteGrid">
-        <!-- Card akan di-generate via JS -->
-      </div>
+      <div class="manga-grid" id="favoriteGrid"></div>
       <div class="empty-state" id="favoriteEmpty" style="display: none;">Belum ada manga yang ditambahkan ke Favorite.</div>
       <button class="see-more-btn" id="favoriteSeeMore" style="display: none;">SEE MORE ▾</button>
     </section>
 
-    <!-- SECTION: BOOKMARK MANGA -->
     <section class="library-section">
       <div class="section-header">
         <h2>🔖 Bookmarked Manga</h2>
       </div>
-      <div class="manga-grid" id="bookmarkGrid">
-        <!-- Card akan di-generate via JS -->
-      </div>
+      <div class="manga-grid" id="bookmarkGrid"></div>
       <div class="empty-state" id="bookmarkEmpty" style="display: none;">Belum ada manga yang di-bookmark.</div>
       <button class="see-more-btn" id="bookmarkSeeMore" style="display: none;">SEE MORE ▾</button>
     </section>
   </main>
 
-  <!-- FLOATING BACK TO TOP BUTTON -->
   <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
 
-  <!-- SCRIPTS -->
+  <script src="/doujinPage/shared/nav.js" defer></script>
+  <script src="/doujinPage/shared/api.js" defer></script>
+  <script src="/doujinPage/shared/ui.js" defer></script>
+  <script src="/doujinPage/shared/storage.js" defer></script>
   <script src="/doujinPage/js/library.js" defer></script>
 </body>
 </html>

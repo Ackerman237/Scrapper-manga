@@ -28,9 +28,27 @@ Shipped:
 - [x] Comprehensive test suites (87 unit & integration tests passing).
 - [x] Portable Chrome path detection across Linux, macOS, and Windows with environment variable support (`lib/browser.js`).
 
+### Track C — Bug Fixes (2026-08-21)
+Status: **COMPLETE ✅ (3 bug fixes shipped, 1 known issue dicatat)**
+
+Shipped:
+- [x] Gambar reader tidak muncul dari filter allManga — `loadInitialPages` selalu dipanggil.
+- [x] Cover manga hilang saat back dari reader (bfcache) — `pageshow` listener di `allManga.js`.
+- [x] Error server dari detail → reader tidak tertangkap — `formatFetchError` diperluas + `fetchChapterWithRetry` + retry button.
+- [x] Continue reading / scroll ke halaman tersimpan dinonaktifkan sementara (`restoreReadingPosition` hanya baca posisi, tidak scroll).
+
+## Known Issues / Technical Debt
+
+### [OPEN] Continue reading: scroll ke halaman terakhir tidak aktif
+- **File:** `storage.js` → `restoreReadingPosition()`
+- **Status:** Dinonaktifkan sengaja. Sistem simpan posisi (localStorage + SQLite) tetap berjalan.
+- **Root cause:** `scrollIntoView()` dipanggil sebelum `setupLazyImages()` terdaftar → gambar tidak pernah dimuat.
+- **Solusi yang dibutuhkan:** Refaktor urutan inisialisasi di `reader.js` — jalankan `setupLazyImages()` dulu, kemudian scroll restore setelah observer siap (misalnya via callback atau `requestAnimationFrame` setelah observer dibuat).
+
 ## Definition of "done" for this focus period
 - Track A: ✅ done.
 - Track B: ✅ done.
+- Track C: ✅ done.
 
 ## Blockers / Open Questions
-- None.
+- Continue reading scroll restore masih disabled — perlu refaktor urutan inisialisasi reader.

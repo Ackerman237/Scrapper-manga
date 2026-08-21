@@ -361,6 +361,7 @@ body.reader-page {
 .reader-pages img {
   width: var(--page-w, 100%);
   max-width: 900px;
+  min-height: 500px;
   height: auto;
   display: block;
   background: var(--card);
@@ -464,27 +465,22 @@ body.reader-page {
 
 .reader-progress {
   position: fixed;
-  right: 12px;
-  top: 60px;
-
+  right: 20px;
+  top: 70px;
   padding: 4px 10px;
   border-radius: 12px;
-
-  background: rgba(0,0,0,0.6);
-  color: white;
-
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
   font-size: 12px;
   z-index: 9999;
-
   opacity: 0;
   transform: translateY(-10px);
   transition: .25s ease;
-
   pointer-events: none;
 }
 
 .reader-progress.show {
-  opacity: 0.7;
+  opacity: 0.65;
   transform: translateY(0);
 }
 
@@ -494,10 +490,6 @@ body.reader-page {
 }
 
 /* ---------- responsive (reader) ---------- */
-
-/* Reading Progress */
-.reader-progress { position: fixed; right: 20px; top: 70px; padding: 4px 10px; border-radius: 12px; background: rgba(0,0,0,0.6); color: #fff; font-size: 12px; z-index: 9999; opacity: 0; transform: translateY(-10px); transition: .25s ease; pointer-events: none; }
-.reader-progress.show { opacity: 0.65; transform: translateY(0); }
 
 /* Mobile */
 @media (max-width: 768px) {

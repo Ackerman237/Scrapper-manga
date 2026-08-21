@@ -5,6 +5,73 @@ notes live in `reports/`.
 
 ---
 
+## 2026-08-21 (2) — Bug fixes: E1 500→404, E2 chapter.number kosong
+
+### Bug fixes
+
+**[E1] 500 → 404 untuk slug/chapter tidak ditemukan**
+- Root cause: `fetcher.js` melempar `Error('HTTP 404')` saat upstream return 404.
+  Controller menangkap semua error sebagai 500 tanpa membedakan jenis error.
+- Fix (`mangaController.js`): `getMangaDetail` dan `getChapterImages` sekarang
+  mengecek `err.message === 'HTTP 404'` dan return `res.status(404)` dengan pesan
+  `'Manga tidak ditemukan'` / `'Chapter tidak ditemukan'`.
+
+**[E2] Field `chapter.number` selalu kosong**
+- Root cause: `normalizer.js` memetakan chapter number ke field `chapter`, bukan
+  `number`. Semua consumer (`reader.js`, `detail.js`) membaca `ch.number` yang
+  selalu `undefined`.
+- Fix (`normalizer.js`): Tambah field `number: ch?.chapter_number ?? ch?.chapter ?? null`
+  di `mapListItem` dan `mapDetail`. Field `chapter` tetap ada untuk backward compatibility.
+
+**Verifikasi:** 87/87 unit & integration test masih pass.
+
+---
+
+## 2026-08-21 (1) — Bug fixes: reader images, cover bfcache, server error handling, continue-reading disabled
+
+### Bug fixes
+
+**[Fix 1] Gambar reader tidak muncul saat masuk dari filter allManga**
+- Root cause: `loadInitialPages()` hanya dipanggil jika `!restoredPage`. Jika ada posisi
+  tersimpan di localStorage (bahkan dari chapter berbeda), gambar pertama tidak pernah
+  di-load ke DOM. IntersectionObserver tidak terpicu karena tidak ada scroll event saat
+  halaman baru dibuka.
+- Fix (`reader.js`): `loadInitialPages(imageList, 2)` sekarang selalu dipanggil tanpa
+  kondisional, memastikan halaman 1–2 selalu dimuat ke DOM saat chapter dibuka.
+
+**[Fix 2] Cover manga hilang saat kembali ke allManga dari reader (bfcache)**
+- Root cause: Browser me-restore halaman dari bfcache (back/forward cache). Gambar dengan
+  `loading="lazy"` yang belum masuk viewport sebelum navigasi tidak diload ulang oleh
+  browser setelah restore, sehingga cover tampak hilang/blank.
+- Fix (`allManga.js`): Tambah `pageshow` event listener. Jika `event.persisted === true`
+  (restore dari bfcache), semua `img` di grid yang `naturalWidth === 0` di-reload ulang
+  dengan toggle `img.src = ''; img.src = currentSrc`.
+
+**[Fix 3] Error "server bermasalah" dari detail → reader tidak tertangkap dengan benar**
+- Root cause: `formatFetchError()` hanya mencocokkan string `'HTTP 500'` secara eksak.
+  Namun server melempar `Error(result.message)` yang isinya teks bahasa Indonesia
+  (`'Terjadi kesalahan pada server'`), sehingga pesan jatuh ke fallback generik, bukan
+  pesan ramah pengguna.
+- Fix (`ui.js`): `formatFetchError()` diperluas dengan regex `server|bermasalah|kesalahan|
+  upstream|timeout|tidak tersedia` untuk menangkap pesan dari upstream.
+- Fix (`reader.js`): Tambah `fetchChapterWithRetry()` — retry otomatis 1x setelah 1.5 detik
+  untuk error sementara (non-404, non-AbortError). Catch block sekarang render HTML dengan
+  tombol "COBA LAGI".
+
+**[Known Issue / Disabled] Continue reading: scroll ke halaman terakhir dinonaktifkan**
+- Root cause: `restoreReadingPosition()` memanggil `scrollIntoView()` sebelum
+  `setupLazyImages()` terdaftar. Gambar target masih blank gif saat di-scroll; karena
+  IntersectionObserver belum aktif, gambar tidak pernah dimuat.
+- Action (`storage.js`): Logika scroll (`scrollIntoView` + buffer load halaman sekitar)
+  dihapus dari `restoreReadingPosition()`. Fungsi tetap ada dan tetap membaca posisi dari
+  localStorage — hanya bagian scroll yang dimatikan.
+- Sistem penyimpanan posisi (localStorage + server SQLite) tidak terpengaruh dan tetap
+  berjalan normal.
+- TODO: Refaktor urutan inisialisasi di `reader.js` agar `setupLazyImages()` selesai
+  terlebih dahulu sebelum scroll restore dilakukan.
+
+---
+
 ## 2026-08-20 — P4 complete: sorting, genre filter, states, server-side reading position
 
 **Commits:**
