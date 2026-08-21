@@ -20,6 +20,7 @@ import {
   getAllReadingPositions,
   saveReadingPositionHandler,
 } from '../controllers/progressController.js';
+import { getVpnStatusHandler } from '../controllers/vpnController.js';
 
 const router = Router();
 
@@ -37,5 +38,6 @@ router.get('/neko/proxy-player', proxyLimiter, proxyNekoPlayer);
 router.get('/progress', generalLimiter, getReadingPosition);
 router.get('/progress/all', generalLimiter, getAllReadingPositions);
 router.post('/progress', generalLimiter, saveReadingPositionHandler);
+router.get('/vpn-status', generalLimiter, getVpnStatusHandler);
 
 export default router;

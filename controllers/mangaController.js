@@ -81,11 +81,68 @@ export const getChapterImages = async (req, res) => {
     if (err?.message === 'HTTP 404') {
       return res.status(404).json({ success: false, message: 'Chapter tidak ditemukan' });
     }
+    if (err?.message === 'UPSTREAM_UNAVAILABLE') {
+      return res.status(503).json({
+        success: false,
+        message: 'Server sumber sedang tidak dapat dihubungi (VPN/upstream bermasalah). Coba lagi beberapa saat.',
+      });
+    }
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
   }
 };
 
+const IMAGE_PROXY_TIMEOUT_MS = Number(process.env.IMAGE_PROXY_TIMEOUT_MS) || 20_000;
+const IMAGE_MAX_SIZE = 10 * 1024 * 1024;
+const IMAGE_CACHE_MAX_ENTRIES = 150;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const PROXY_IMAGE_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  Referer: 'https://doujin.desu.xxx',
+};
+
+const imageCache = new Map();
+
+function imageCacheGet(key) {
+  if (!imageCache.has(key)) return null;
+  const entry = imageCache.get(key);
+  imageCache.delete(key);
+  imageCache.set(key, entry);
+  return entry;
+}
+
+function imageCacheSet(key, entry) {
+  if (imageCache.has(key)) imageCache.delete(key);
+  imageCache.set(key, entry);
+  while (imageCache.size > IMAGE_CACHE_MAX_ENTRIES) {
+    const oldestKey = imageCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    imageCache.delete(oldestKey);
+  }
+}
+
+async function openUpstreamImage(safeUrl) {
+  let lastErr;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), IMAGE_PROXY_TIMEOUT_MS);
+    try {
+      const response = await fetch(safeUrl, {
+        redirect: 'manual',
+        signal: controller.signal,
+        headers: PROXY_IMAGE_HEADERS,
+      });
+      return { response, controller, timer };
+    } catch (err) {
+      clearTimeout(timer);
+      lastErr = err;
+    }
+  }
+  throw lastErr;
+}
+
 export const proxyImage = async (req, res) => {
+  let controller = null;
+  let timer = null;
   try {
     const imageUrl = req.query.url;
     if (!imageUrl) {
@@ -97,43 +154,77 @@ export const proxyImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'URL gambar tidak valid' });
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const cached = imageCacheGet(safeUrl);
+    if (cached) {
+      res.setHeader('Content-Type', cached.contentType);
+      res.setHeader('X-Cache', 'HIT');
+      return res.send(cached.buffer);
+    }
 
-    const response = await fetch(safeUrl, {
-      redirect: 'manual',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        Referer: 'https://doujin.desu.xxx',
-      },
-    });
+    let opened;
+    try {
+      opened = await openUpstreamImage(safeUrl);
+    } catch (err) {
+      logger.warn({ err }, 'proxyImage upstream gagal setelah retry');
+      if (err?.name === 'AbortError') {
+        return res.status(504).json({ success: false, message: 'Server sumber lambat merespons' });
+      }
+      return res.status(502).json({ success: false, message: 'Gagal mengambil gambar dari sumber' });
+    }
+
+    const response = opened.response;
+    controller = opened.controller;
+    timer = opened.timer;
 
     if (response.status >= 300 && response.status < 400) {
       return res.status(400).json({ success: false, message: 'Redirect gambar tidak diizinkan' });
     }
-    clearTimeout(timeout);
 
     if (!response.ok) {
       return res.status(response.status).json({ success: false, message: 'Gagal mengambil gambar dari sumber' });
     }
 
     const contentType = response.headers.get('content-type') || '';
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-
-    if (!allowedTypes.some((type) => contentType.includes(type))) {
+    if (!ALLOWED_IMAGE_TYPES.some((type) => contentType.includes(type))) {
       return res.status(400).json({ success: false, message: 'Response bukan file gambar' });
     }
 
     res.setHeader('Content-Type', contentType);
-    const buffer = await response.arrayBuffer();
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (buffer.byteLength > MAX_SIZE) {
-      return res.status(413).json({ success: false, message: 'Ukuran gambar terlalu besar' });
+    res.setHeader('X-Cache', 'MISS');
+
+    let total = 0;
+    const chunks = [];
+    let tooLarge = false;
+    const reader = response.body.getReader();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > IMAGE_MAX_SIZE) {
+        tooLarge = true;
+        controller.abort();
+        break;
+      }
+      const chunk = Buffer.from(value);
+      chunks.push(chunk);
+      if (!res.write(chunk)) {
+        await new Promise((resolve) => res.once('drain', resolve));
+      }
     }
-    return res.send(Buffer.from(buffer));
+    res.end();
+
+    if (!tooLarge && total > 0) {
+      imageCacheSet(safeUrl, { contentType, buffer: Buffer.concat(chunks) });
+    }
   } catch (err) {
     logger.error({ err }, 'proxyImage error');
-    return res.status(500).json({ success: false, message: 'Gagal mengambil gambar' });
+    if (controller) controller.abort();
+    if (!res.headersSent) {
+      return res.status(500).json({ success: false, message: 'Gagal mengambil gambar' });
+    }
+    res.end();
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 };

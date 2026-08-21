@@ -77,6 +77,10 @@ const SECRET_PATTERNS = [
   /["']X-App-Secret["']\s*:\s*["']([a-f0-9]{24,64})["']/i,
   // Pola dengan nama variabel pendek yang umum di minified bundle
   /\bsecret\s*[:=]\s*["']([a-f0-9]{24,64})["']/i,
+  // Pola baru: variabel pendek di bundle Vite (we, xe, dll)
+  /\b(?:we|xe|ye|ze)\s*=\s*["']([a-f0-9]{32})["']/i,
+  // Pola generik: variable = "32-char-hex"
+  /\b[a-z]{1,3}\s*=\s*["']([a-f0-9]{32})["']/i,
 ];
 
 const SALT_PATTERNS = [
@@ -84,6 +88,10 @@ const SALT_PATTERNS = [
   /(?:DOUJIN[_-]SALT|doujin[_-]salt)\s*[:=]\s*["']([^"']{16,120})["']/i,
   /\bsalt\s*[:=]\s*["'](doujin[^"']{10,100})["']/i,
   /\bsalt\s*[:=]\s*["']([a-zA-Z0-9_\-]{20,120})["']/i,
+  // Pola baru: variabel pendek di bundle Vite (Wi, Xi, dll)
+  /\b(?:Wi|Xi|Yi|Zi)\s*=\s*["'](doujin[^"']{16,120})["']/i,
+  // Pola generik: variable = "doujin...salt..."
+  /\b[a-zA-Z]{1,3}\s*=\s*["'](doujin[^"']{16,120})["']/i,
 ];
 
 // ── Cari nilai dari daftar pola ───────────────────────────────────────────────
@@ -127,6 +135,9 @@ async function main() {
 
   let browser;
   const bundleContents = [];
+  let foundSecret = null;
+  let foundSalt = null;
+  let foundInUrl = '';
 
   try {
     browser = await puppeteer.launch({
@@ -147,16 +158,14 @@ async function main() {
       const url = response.url();
       const contentType = response.headers()['content-type'] || '';
 
-      // Hanya tangkap file JS yang kemungkinan bundle utama React
-      if (
-        contentType.includes('javascript') &&
-        (url.includes('/static/js/') || url.includes('/assets/') || url.match(/\.(js|mjs)(\?|$)/))
-      ) {
+      // Tangkap SEMUA file JS
+      if (contentType.includes('javascript')) {
         try {
           const text = await response.text();
-          // Filter: hanya proses bundle yang cukup besar (kemungkinan bundle utama)
-          if (text.length > 50_000) {
+          // Log semua JS untuk debug
+          if (text.length > 1000) {
             bundleContents.push({ url, text });
+            console.log(`[get-secret] JS found: ${url.split('/').pop()} (${text.length} chars)`);
           }
         } catch {
           // Abaikan jika gagal baca response (sudah consumed)
@@ -167,10 +176,48 @@ async function main() {
     console.log('[get-secret] Membuka situs...');
 
     try {
-      await page.goto(TARGET_URL, {
+      const response = await page.goto(TARGET_URL, {
         waitUntil: 'networkidle2',
-        timeout: 45_000,
+        timeout: 60_000,
       });
+
+      // Cek HTML response untuk inline scripts/meta tags
+      const html = await response.text();
+      console.log('[get-secret] HTML length:', html.length);
+      
+      // Cari patterns di HTML
+      const htmlSecret = extractFromBundle(html, SECRET_PATTERNS);
+      const htmlSalt = extractFromBundle(html, SALT_PATTERNS);
+      
+      if (htmlSecret) {
+        console.log('[get-secret] DOUJIN_APP_SECRET ditemukan di HTML response!');
+        foundSecret = htmlSecret;
+      }
+      if (htmlSalt) {
+        console.log('[get-secret] DOUJIN_SALT ditemukan di HTML response!');
+        foundSalt = htmlSalt;
+      }
+
+      // Cek inline scripts
+      const scriptMatches = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi);
+      if (scriptMatches) {
+        for (const script of scriptMatches) {
+          const content = script.replace(/<\/?script[^>]*>/gi, '');
+          if (content.length > 100) {
+            const s = extractFromBundle(content, SECRET_PATTERNS);
+            const sa = extractFromBundle(content, SALT_PATTERNS);
+            if (s) {
+              console.log('[get-secret] DOUJIN_APP_SECRET ditemukan di inline script!');
+              foundSecret = s;
+            }
+            if (sa) {
+              console.log('[get-secret] DOUJIN_SALT ditemukan di inline script!');
+              foundSalt = sa;
+            }
+          }
+        }
+      }
+
     } catch (err) {
       if (err.name === 'TimeoutError') {
         console.warn('[get-secret] Timeout menunggu networkidle2, mencoba lanjutkan dengan bundle yang sudah dikumpulkan...');
@@ -179,8 +226,27 @@ async function main() {
       }
     }
 
-    // Tunggu sebentar agar bundle lazy-loaded juga ke-intercept
-    await new Promise((r) => setTimeout(r, 2000));
+    // Tunggu lebih lama untuk bundle lazy-loaded
+    await new Promise((r) => setTimeout(r, 5000));
+
+    // Scroll untuk memicu lazy loading
+    await page.evaluate(() => {
+      return new Promise(resolve => {
+        let totalHeight = 0;
+        const distance = 100;
+        const timer = setInterval(() => {
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+          if (totalHeight >= document.body.scrollHeight) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 100);
+      });
+    });
+
+    // Tunggu sebentar setelah scroll
+    await new Promise((r) => setTimeout(r, 3000));
 
   } finally {
     if (browser) {
@@ -190,16 +256,18 @@ async function main() {
   }
 
   if (bundleContents.length === 0) {
-    console.error('[get-secret] ✗ Tidak ada bundle JS yang berhasil diunduh.');
-    console.error('[get-secret] Kemungkinan penyebab: situs tidak dapat diakses, Chrome tidak ditemukan, atau situs memblokir headless browser.');
-    process.exit(1);
-  }
+      console.error('[get-secret] ✗ Tidak ada bundle JS yang berhasil diunduh.');
+      console.error('[get-secret] Kemungkinan penyebab: situs tidak dapat diakses, Chrome tidak ditemukan, atau situs memblokir headless browser.');
+      process.exit(1);
+    }
 
-  console.log(`[get-secret] ${bundleContents.length} bundle JS ditemukan, mulai ekstraksi...`);
+    // Debug: tampilkan preview bundle pertama
+    for (const { url, text } of bundleContents) {
+      console.log(`[get-secret] Bundle: ${url.split('/').pop()} (${text.length} chars)`);
+      console.log(`[get-secret] Preview: ${text.slice(0, 500)}`);
+    }
 
-  let foundSecret = null;
-  let foundSalt = null;
-  let foundInUrl = '';
+    console.log(`[get-secret] ${bundleContents.length} bundle JS ditemukan, mulai ekstraksi...`);
 
   for (const { url, text } of bundleContents) {
     if (!foundSecret) {

@@ -170,3 +170,6 @@ kiro-cli.exe
 
 # SQLite database
 data/
+
+# VPN manager persistent state
+.data/

@@ -82,6 +82,18 @@ describe('isAllowedImageHost', () => {
     expect(isAllowedImageHost('doujin.desu.xxx')).toBe(true);
   });
 
+  it('returns true for any subdomain of allowed domain suffix', () => {
+    expect(isAllowedImageHost('ch-img.desu.pics')).toBe(true);
+    expect(isAllowedImageHost('amz-ch.desu.pics')).toBe(true);
+    expect(isAllowedImageHost('img2.desu.pics')).toBe(true);
+    expect(isAllowedImageHost('pic.desu.xxx')).toBe(true);
+  });
+
+  it('returns false for lookalike domain that only ends with suffix without dot boundary', () => {
+    expect(isAllowedImageHost('evildesu.pics')).toBe(false);
+    expect(isAllowedImageHost('desu.pics.evil.com')).toBe(false);
+  });
+
   it('returns false for unknown host', () => {
     expect(isAllowedImageHost('evil.com')).toBe(false);
   });

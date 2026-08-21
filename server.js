@@ -5,6 +5,7 @@ import net from 'net';
 import apiRoutes from './routes/api.js';
 import logger from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { disconnectVpn } from './lib/vpn/vpnManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,6 +81,18 @@ function listenWithFallback(initialPort, maxAttempts = 5) {
 
 if (process.env.NODE_ENV !== 'test') {
   listenWithFallback(PORT);
+
+  async function gracefulShutdown(signal) {
+    logger.info({ signal }, 'Shutdown dimulai, memutus VPN...');
+    try {
+      await disconnectVpn();
+    } finally {
+      process.exit(0);
+    }
+  }
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 }
 
 export default app;

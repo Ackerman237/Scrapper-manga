@@ -31,7 +31,7 @@ function setupLazyImages(container) {
         }
         observer.unobserve(img);
       });
-    }, { rootMargin: '600px 0px' });
+    }, { rootMargin: '1500px 0px' });
 
     images.forEach((img) => observer.observe(img));
     return;
@@ -53,6 +53,57 @@ function loadInitialPages(container, count = 10) {
       img.removeAttribute('data-src');
     }
   });
+}
+
+const IMAGE_RETRY_DELAYS = [1000, 2000, 4000];
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function describeImageFailure(url) {
+  try {
+    const res = await fetch(url);
+    if (res.status === 504) return 'Server sumber lambat merespons (timeout).';
+    if (res.status >= 500) return 'Server sumber sedang bermasalah.';
+    if (res.status === 404 || res.status === 400) return 'Gambar tidak ditemukan atau ditolak server.';
+    return `Server sumber menjawab dengan kode ${res.status}.`;
+  } catch {
+    return 'Koneksi ke server terputus — periksa internet atau VPN.';
+  }
+}
+
+function createLoadStatus(totalPages) {
+  let ready = 0;
+  let failed = 0;
+  const bar = document.createElement('div');
+  bar.className = 'reader-load-status';
+  bar.innerHTML = `<span class="reader-load-status__text">Memuat halaman 0/${totalPages}...</span><div class="reader-load-status__track"><div class="reader-load-status__fill" style="width:0%"></div></div>`;
+
+  function update() {
+    const done = ready + failed;
+    const text = bar.querySelector('.reader-load-status__text');
+    const fill = bar.querySelector('.reader-load-status__fill');
+    if (text) {
+      text.textContent =
+        done >= totalPages
+          ? failed > 0
+            ? `${ready}/${totalPages} halaman siap, ${failed} gagal dimuat`
+            : `Semua ${totalPages} halaman siap`
+          : `Memuat halaman ${done}/${totalPages}...`;
+    }
+    if (fill) fill.style.width = `${Math.round((done / totalPages) * 100)}%`;
+    if (done >= totalPages) bar.classList.add('is-done', failed > 0 ? 'has-failure' : 'is-complete');
+  }
+
+  return {
+    element: bar,
+    pageSettled(success) {
+      if (success) ready += 1;
+      else failed += 1;
+      update();
+    },
+  };
 }
 
 function setupReadingProgress(imageList, totalPages, readingData) {
@@ -557,41 +608,86 @@ async function loadChapter() {
     imageList.className = 'reader-pages';
 
     if (imageUrls.length > 0) {
+      const loadStatus = createLoadStatus(imageUrls.length);
+      container.insertBefore(loadStatus.element, container.firstChild);
+
+      const settlePage = (success) => loadStatus.pageSettled(success);
+
       imageUrls.forEach((imgUrl, index) => {
-        const img = document.createElement('img');
         const imageUrl = `/api/image-proxy?url=${encodeURIComponent(imgUrl)}&chapterId=${encodeURIComponent(chapterId)}`;
+
+        const pageWrap = document.createElement('div');
+        pageWrap.className = 'reader-page';
+
+        const skeleton = document.createElement('div');
+        skeleton.className = 'reader-page-skeleton';
+        skeleton.innerHTML = `
+          <div class="reader-page-skeleton__spinner"></div>
+          <p class="reader-page-skeleton__text">Memuat hal. ${index + 1}</p>
+        `;
+
+        const img = document.createElement('img');
         img.alt = `Halaman ${index + 1}`;
         img.loading = 'lazy';
         img.decoding = 'async';
         img.dataset.src = imageUrl;
-        img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
-        img.onerror = () => {
-          const errorBox = document.createElement('div');
-          errorBox.className = 'reader-image-error';
-          errorBox.innerHTML = `
-            <svg class="reader-image-error__icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+
+        let attempts = 0;
+        const maxAttempts = IMAGE_RETRY_DELAYS.length;
+
+        const showSkeletonRetry = (attempt) => {
+          skeleton.classList.remove('is-failed');
+          const text = skeleton.querySelector('.reader-page-skeleton__text');
+          if (text) text.textContent = `Mengulang hal. ${index + 1} (${attempt}/${maxAttempts})...`;
+        };
+
+        const showErrorBox = async () => {
+          const reason = await describeImageFailure(imageUrl);
+          skeleton.classList.add('is-failed');
+          skeleton.innerHTML = `
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="8" x2="12" y2="13"/>
               <circle cx="12" cy="16.5" r="0.5" fill="currentColor"/>
             </svg>
-            <p class="reader-image-error__text">Gambar halaman ${index + 1} gagal dimuat</p>
-            <button type="button" class="reader-image-error__retry">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-              </svg>
-              Coba Lagi
-            </button>
+            <p class="reader-page-skeleton__text">Gambar halaman ${index + 1} gagal dimuat.<br><small>${reason}</small></p>
+            <button type="button" class="reader-page-skeleton__retry">Coba Lagi</button>
           `;
-          const retryBtn = errorBox.querySelector('button');
-          retryBtn.addEventListener('click', () => {
-            img.removeAttribute('data-src');
-            img.src = `${imageUrl}&t=${Date.now()}`;
-            errorBox.replaceWith(img);
-          });
-          img.replaceWith(errorBox);
+          const retryBtn = skeleton.querySelector('.reader-page-skeleton__retry');
+          if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+              attempts = 0;
+              skeleton.classList.remove('is-failed');
+              skeleton.innerHTML = `
+                <div class="reader-page-skeleton__spinner"></div>
+                <p class="reader-page-skeleton__text">Memuat hal. ${index + 1}</p>
+              `;
+              img.src = `${imageUrl}&t=${Date.now()}`;
+            });
+          }
         };
-        imageList.appendChild(img);
+
+        img.addEventListener('load', () => {
+          pageWrap.classList.add('is-loaded');
+          skeleton.remove();
+          settlePage(true);
+        });
+
+        img.addEventListener('error', async () => {
+          if (!img.getAttribute('src')) return;
+          if (attempts < maxAttempts) {
+            attempts += 1;
+            showSkeletonRetry(attempts);
+            await delay(IMAGE_RETRY_DELAYS[attempts - 1]);
+            img.src = `${imageUrl}&t=${Date.now()}`;
+          } else {
+            settlePage(false);
+            await showErrorBox();
+          }
+        });
+
+        pageWrap.append(skeleton, img);
+        imageList.appendChild(pageWrap);
       });
 
       saveReadingHistory({
