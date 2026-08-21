@@ -1,6 +1,6 @@
 // nekoPage/js/index.js — Neko Video list page
 
-let currentOffset = 0;
+let currentOffset = 1;
 let currentCategory = '';
 let currentQuery = '';
 
@@ -10,13 +10,15 @@ function renderVideoCard(video) {
 
   const thumbUrl = video.thumb || 'https://placehold.co/480x270?text=No+Thumb';
   const title = video.title || 'Tanpa Judul';
+  // Escape HTML entities in title to prevent layout break / XSS
+  const escapedTitle = title.replace(/[&"<>]/g, m => ({ '&': '&', '"': '"', '<': '<', '>': '>' }[m]));
   const date = video.date || '-';
   const slug = video.slug || '';
 
   card.innerHTML = `
-    <img class="video-thumb" src="${thumbUrl}" alt="${title}" loading="lazy" referrerpolicy="no-referrer">
+    <img class="video-thumb" src="${thumbUrl}" alt="${escapedTitle}" loading="lazy" referrerpolicy="no-referrer">
     <div class="video-info">
-      <h3 class="video-title">${title}</h3>
+      <h3 class="video-title">${escapedTitle}</h3>
       <div class="video-date">${date}</div>
     </div>
   `;
@@ -46,8 +48,8 @@ async function loadCategories() {
     allBtn.textContent = 'ALL';
     allBtn.addEventListener('click', () => {
       currentCategory = '';
-      currentOffset = 1; // mulai dari halaman 1 (page 1 = '/')
       currentQuery = '';
+      currentOffset = 1;
       container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
       allBtn.classList.add('active');
       loadVideos(true);
@@ -58,11 +60,13 @@ async function loadCategories() {
       const btn = document.createElement('button');
       btn.className = 'category-btn';
       // Gunakan slug untuk endpoint backend, tampilkan name di UI
-      currentCategory = cat.slug; // <-- perbaikan: gunakan slug, bukan name
+      currentCategory = cat.slug;
       btn.textContent = cat.name || cat.slug;
       btn.addEventListener('click', () => {
-        currentCategory = cat.slug; // <-- perbaikan
-        currentOffset = 1; // reset ke halaman 1
+        // Reset query saat pindah kategori agar filter bersih
+        currentQuery = '';
+        currentCategory = cat.slug;
+        currentOffset = 1;
         container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         loadVideos(true);
@@ -82,7 +86,8 @@ async function loadVideos(reset = false) {
   if (!grid) return;
 
   if (reset) {
-    currentOffset = 1; // mulai dari halaman 1
+    currentOffset = 1;
+    currentQuery = '';
     grid.innerHTML = '';
   }
 
@@ -101,7 +106,10 @@ async function loadVideos(reset = false) {
     const result = await res.json();
     if (!result.success) throw new Error(result.message || 'Gagal memuat video.');
 
-    const videos = result.data || [];
+    // Normalisasi payload: API mengembalikan {videos, hasNext} atau array langsung
+    const payload = result.data || {};
+    const videos = Array.isArray(payload) ? payload : (payload.videos || []);
+    const hasNext = Array.isArray(payload) ? videos.length > 0 : Boolean(payload.hasNext);
 
     if (reset) grid.innerHTML = '';
 
@@ -126,7 +134,7 @@ async function loadVideos(reset = false) {
     currentOffset++; // naik ke halaman selanjutnya
 
     if (loadMoreBtn) {
-      loadMoreBtn.style.display = videos.length > 0 ? 'block' : 'none';
+      loadMoreBtn.style.display = hasNext ? 'block' : 'none';
       loadMoreBtn.textContent = 'SEE MORE';
       loadMoreBtn.onclick = () => loadVideos(false);
     }
@@ -153,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
       currentQuery = searchInput ? searchInput.value.trim() : '';
-      currentOffset = 0;
+      currentOffset = 1;
       loadVideos(true);
     });
   }
