@@ -1,6 +1,7 @@
 // controllers/progressController.js — Reading position CRUD
 
 import { upsertPosition, getPosition, getAllPositions } from '../lib/db.js';
+import { safeHttpUrl } from '../lib/security.js';
 import logger from '../lib/logger.js';
 
 const DEVICE_ID_HEADER = 'x-device-id';
@@ -102,7 +103,14 @@ export const saveReadingPositionHandler = (req, res) => {
     const page = sanitizePage(req.body?.page);
     const chapterNum = req.body?.chapterNum != null ? String(req.body.chapterNum).slice(0, 20) : null;
 
-    upsertPosition({ deviceId, mangaSlug, chapterId, page, chapterNum });
+    // Metadata opsional untuk halaman riwayat baca (boleh tidak ada pada client lama)
+    let mangaTitle = null;
+    if (typeof req.body?.mangaTitle === 'string' && req.body.mangaTitle.trim()) {
+      mangaTitle = req.body.mangaTitle.trim().slice(0, 200);
+    }
+    const coverUrl = typeof req.body?.coverUrl === 'string' ? safeHttpUrl(req.body.coverUrl.trim()) : null;
+
+    upsertPosition({ deviceId, mangaSlug, chapterId, page, chapterNum, mangaTitle, coverUrl });
     return res.json({ success: true });
   } catch (err) {
     logger.error({ err }, 'saveReadingPosition error');

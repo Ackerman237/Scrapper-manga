@@ -55,6 +55,34 @@ function loadInitialPages(container, count = 10) {
   });
 }
 
+/**
+ * Scroll ke halaman tersimpan. WAJIB dipanggil setelah setupLazyImages() agar
+ * IntersectionObserver sudah terdaftar — kalau scroll dilakukan lebih dulu,
+ * gambar di sekitar posisi target tidak akan pernah dimuat (known issue lama).
+ */
+function scrollToReadingPosition(container, targetPage) {
+  const pages = container.querySelectorAll('.reader-page');
+  if (!targetPage || targetPage <= 1 || targetPage > pages.length) return;
+
+  // Buffer-load halaman sekitar posisi target agar tidak blank saat sampai sana
+  const from = Math.max(0, targetPage - 2);
+  const to = Math.min(pages.length, targetPage + 2);
+  for (let i = from; i < to; i++) {
+    const img = pages[i]?.querySelector('img');
+    if (img?.dataset.src) {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    }
+  }
+
+  // Tunggu satu frame + delay singkat agar layout halaman settle sebelum scroll
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      pages[targetPage - 1]?.scrollIntoView({ block: 'start' });
+    }, 250);
+  });
+}
+
 const IMAGE_RETRY_DELAYS = [1000, 2000, 4000];
 
 function delay(ms) {
@@ -731,7 +759,7 @@ async function loadChapter() {
           // Jika server punya posisi yang lebih baru / berbeda, sesuaikan jika belum di-restore
           const currentSaved = JSON.parse(localStorage.getItem('readingPosition') || '{}');
           if (!currentSaved.page || serverPos.page > currentSaved.page) {
-            restoreReadingPosition(imageList, mangaSlug, chapterId, serverPos.page);
+            scrollToReadingPosition(imageList, serverPos.page);
           }
         }
       }).catch(() => {});
@@ -744,11 +772,18 @@ async function loadChapter() {
     // 4. Daftarkan sisa gambar ke lazy loading (IntersectionObserver)
     setupLazyImages(imageList);
 
+    // 5. Restore posisi baca: scroll SETELAH lazy loading aktif (fix known issue lama)
+    if (restoredPage > 1) {
+      scrollToReadingPosition(imageList, restoredPage);
+    }
+
     const chapterNum = chapterData.number ?? chapterData.chapter ?? null;
     setupReadingProgress(imageList, imageUrls.length, {
       slug: mangaSlug,
       chapterId: chapterId,
       chapterNum: chapterNum,
+      mangaTitle: mangaTitle,
+      coverUrl: chapterData.thumb || mangaDetail?.thumb || mangaDetail?.cover || mangaDetail?.coverUrl || '',
     });
 
     const goNext = () => {

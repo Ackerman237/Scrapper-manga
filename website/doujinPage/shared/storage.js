@@ -75,13 +75,9 @@ function saveReadingPosition(data) {
 }
 
 function restoreReadingPosition(imageList, slug, chapterId, targetPageOverride = null) {
-  // KNOWN ISSUE: Logika scroll-to-page dinonaktifkan sementara karena menyebabkan gambar
-  // tidak muncul. Saat scrollIntoView dipanggil, IntersectionObserver (lazy load) belum
-  // terdaftar sehingga gambar tidak pernah dimuat. Sistem penyimpanan posisi (localStorage
-  // & server) tetap berjalan normal — hanya bagian restore scroll ke halaman yang dimatikan.
-  // TODO: Aktifkan kembali setelah lazy loading dan scroll restore direfaktor agar urutan
-  // inisialisasi benar (setupLazyImages harus selesai sebelum scroll dilakukan).
-
+  // Fungsi ini HANYA mengembalikan nomor halaman tersimpan (tidak scroll).
+  // Scroll dilakukan caller via scrollToReadingPosition() SETELAH setupLazyImages()
+  // terdaftar — lihat reader.js langkah 5.
   let targetPage = targetPageOverride;
   if (!targetPage) {
     const saved = JSON.parse(localStorage.getItem('readingPosition'));
@@ -128,6 +124,8 @@ async function saveProgressToServer(data) {
         chapterId: data.chapterId,
         page: data.page || 1,
         chapterNum: data.chapterNum != null ? String(data.chapterNum) : null,
+        mangaTitle: data.mangaTitle || null,
+        coverUrl: data.coverUrl || null,
       }),
     });
   } catch {
