@@ -5,6 +5,39 @@ notes live in `reports/`.
 
 ---
 
+## 2026-08-22 (2) — Fix: hasil acak mendarat di halaman seri -> "Player video tidak tersedia"
+
+### Root cause
+Tombol ACAK mengikuti `/random` milik nekopoi yang bisa mendarat di semua tipe post.
+Halaman **seri** (koleksi multi-episode, mis. "[The Sleazy Family]") tidak memuat
+iframe player — hanya link episode — sehingga `parsePlayers()` kosong dan watch page
+menampilkan error dead-end.
+
+### Fixes
+**[F1] Deteksi seri + daftar episode (`scrapeNekoDetail`)**
+- Parser baru `parseEpisodes(html, currentSlug)`: anchor internal dalam konten
+  utama, exclude nav/kategori/pagination/related/self slug; maksimal 50 item.
+- Field baru `episodes` pada hasil detail (ikut cache 10 menit).
+- `parsePlayers()` kini mencatat host iframe di luar allowlist via
+  `logger.warn` — dasar data untuk update `NEKO_PLAYER_HOSTS`.
+
+**[F2] UX recovery di watch page**
+- Player kosong bukan lagi dead-end:
+  - Ada episode -> pesan "Ini halaman seri — pilih episode" + daftar clickable
+    (`watch.html?slug=...`), style `.episode-list` di watch.css.
+  - Selalu ada tombol "Video Acak Lain" (panggil `/api/neko/random`, pola sama
+    dengan tombol ACAK di index).
+
+Keputusan desain: TIDAK ada retry server-side pada random (tiap pengecekan
+= 1 fetch VPN; latency hingga belasan detik dan tak menjamin). Recovery
+ditangani client-side.
+
+Test: +2 kasus di tests/nekoFeatures.test.js (seri tanpa iframe ->
+episodes terisi & self/kategori/related terabaikan; single video dengan
+host allowlist tetap mengembalikan players). Total 130/130 di 8 file.
+
+---
+
 ## 2026-08-22 — Fitur baru: gap analysis doujin.desu.xxx & nekopoi.care (Fase A–C)
 
 ### Fase A — Doujin quick wins

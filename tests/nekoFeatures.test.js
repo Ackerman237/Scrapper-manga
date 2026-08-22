@@ -17,6 +17,7 @@ import {
   scrapeNekoSchedule,
   scrapeNekoSeriesList,
   scrapeNekoRandom,
+  scrapeNekoDetail,
   _clearNekoCacheForTests,
 } from '../lib/scraper/nekoScraper.js';
 
@@ -110,6 +111,55 @@ describe('scrapeNekoSeriesList', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const calledUrl = fetchMock.mock.calls[0][0];
     expect(calledUrl).toContain('/jav-list/page/2/');
+  });
+});
+
+describe('scrapeNekoDetail - halaman seri (fallback episode)', () => {
+  it('mengembalikan episodes terisi saat tidak ada iframe player', async () => {
+    fetchMock.mockResolvedValueOnce(
+      htmlResponse(`
+        <html><head><title>The Sleazy Family &#8211; NekoPoi</title>
+        <meta property="og:image" content="https://nekopoi.care/img/sleazy.jpg"></head>
+        <body>
+          <div class="entry-content">
+            <p>Sinopsis seri panjang lebih dari empat puluh karakter untuk pengujian.</p>
+            <a href="https://nekopoi.care/the-sleazy-family-episode-1/">The Sleazy Family Episode 1</a>
+            <a href="https://nekopoi.care/the-sleazy-family-episode-2/">The Sleazy Family Episode 2</a>
+          </div>
+          <h3>Direkomendasikan</h3>
+          <a href="https://nekopoi.care/hentai/other-show/"><img src="https://nekopoi.care/o.jpg" alt="Other Show"></a>
+          <a href="https://nekopoi.care/category/hentai/">Kategori (harus diabaikan)</a>
+          <a href="https://nekopoi.care/the-sleazy-family/">Self link (harus diabaikan)</a>
+        </body></html>
+      `)
+    );
+
+    const detail = await scrapeNekoDetail('the-sleazy-family');
+
+    expect(detail.players).toHaveLength(0);
+    expect(detail.episodes.length).toBeGreaterThanOrEqual(2);
+    const slugs = detail.episodes.map((e) => e.slug);
+    expect(slugs).toContain('the-sleazy-family-episode-1');
+    expect(slugs).toContain('the-sleazy-family-episode-2');
+    // Self, kategori, dan blok related tidak masuk daftar episode
+    expect(slugs).not.toContain('the-sleazy-family');
+    expect(slugs).not.toContain('other-show');
+  });
+
+  it('tetap mengembalikan players saat iframe host allowlist ada', async () => {
+    fetchMock.mockResolvedValueOnce(
+      htmlResponse(`
+        <html><head><title>Single Video &#8211; NekoPoi</title></head>
+        <body>
+          <iframe src="https://playmogo.com/embed/abc123"></iframe>
+        </body></html>
+      `)
+    );
+
+    const detail = await scrapeNekoDetail('single-video-test');
+
+    expect(detail.players).toHaveLength(1);
+    expect(detail.players[0]).toContain('playmogo.com');
   });
 });
 
