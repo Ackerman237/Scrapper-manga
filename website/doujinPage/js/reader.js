@@ -228,13 +228,17 @@ function setupBackToTopBtn() {
 
 // Chrome builders
 
-function makeIconButton({ label, text, className, disabled = false, onClick }) {
+function makeIconButton({ label, text, icon, className, disabled = false, onClick }) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = className;
   button.setAttribute('aria-label', label);
   button.title = label;
-  button.textContent = text;
+  if (icon && typeof ic === 'function') {
+    button.innerHTML = ic(icon);
+  } else {
+    button.textContent = text;
+  }
   if (disabled) {
     button.disabled = true;
     button.classList.add('is-disabled');
@@ -250,7 +254,7 @@ function buildTopBar({ mangaTitle, chapterLabelText, mangaSlug }) {
 
   const backBtn = makeIconButton({
     label: 'Kembali',
-    text: '←',
+    icon: 'arrow-left',
     className: 'reader-tb-btn',
     onClick: () => {
       if (mangaSlug) {
@@ -286,7 +290,7 @@ function buildTopBar({ mangaTitle, chapterLabelText, mangaSlug }) {
   homeBtn.className = 'reader-tb-btn';
   homeBtn.setAttribute('aria-label', 'Beranda');
   homeBtn.title = 'Beranda';
-  homeBtn.textContent = '⌂';
+  homeBtn.innerHTML = typeof ic === 'function' ? ic('house') : '⌂';
 
   bar.append(backBtn, titleWrap, homeBtn);
   return bar;
@@ -308,21 +312,21 @@ function buildBottomBar({ prevChapter, nextChapter, onPlayToggle, onSettings, on
 
   const settingsBtn = makeIconButton({
     label: 'Pengaturan baca',
-    text: '⚙',
+    icon: 'settings',
     className: 'reader-bb-btn',
     onClick: onSettings,
   });
 
   const playBtn = makeIconButton({
     label: 'Mulai auto-scroll',
-    text: '▶',
+    icon: 'play',
     className: 'reader-bb-btn is-play',
     onClick: () => onPlayToggle(playBtn),
   });
 
   const menuBtn = makeIconButton({
     label: 'Daftar chapter',
-    text: '☰',
+    icon: 'list',
     className: 'reader-bb-btn',
     onClick: onMenu,
   });
@@ -347,14 +351,14 @@ function buildSideControls() {
 
   const upBtn = makeIconButton({
     label: 'Scroll ke atas',
-    text: '▲',
+    icon: 'chevron-up',
     className: 'reader-side-btn',
     onClick: () => window.scrollBy({ top: -Math.round(window.innerHeight * 0.8), behavior: 'smooth' }),
   });
 
   const downBtn = makeIconButton({
     label: 'Scroll ke bawah',
-    text: '▼',
+    icon: 'chevron-down',
     className: 'reader-side-btn',
     onClick: () => window.scrollBy({ top: Math.round(window.innerHeight * 0.8), behavior: 'smooth' }),
   });
@@ -377,7 +381,7 @@ function buildChapterDrawer({ chapters, currentChapterId }) {
   closeBtn.type = 'button';
   closeBtn.className = 'reader-drawer-close';
   closeBtn.setAttribute('aria-label', 'Tutup');
-  closeBtn.textContent = '✕';
+  closeBtn.innerHTML = typeof ic === 'function' ? ic('x') : '✕';
 
   head.append(heading, closeBtn);
 
@@ -443,7 +447,7 @@ function buildSettingsPanel({ imageList }) {
   closeBtn.type = 'button';
   closeBtn.className = 'reader-drawer-close';
   closeBtn.setAttribute('aria-label', 'Tutup');
-  closeBtn.textContent = '✕';
+  closeBtn.innerHTML = typeof ic === 'function' ? ic('x') : '✕';
 
   head.append(heading, closeBtn);
 
@@ -731,6 +735,7 @@ async function loadChapter() {
         slug: mangaSlug,
         title: mangaTitle,
         thumb: chapterData.thumb || mangaDetail?.thumb || mangaDetail?.cover || mangaDetail?.coverUrl || "https://placehold.co/420x560?text=No+Cover",
+        type: mangaDetail?.type || '',
         chapter: chapterData.number ?? chapterData.chapter ?? (currentIndex >= 0 ? currentIndex + 1 : 1),
         chapterId: chapterId,
         lastRead: new Date().toISOString()
@@ -784,6 +789,7 @@ async function loadChapter() {
       chapterNum: chapterNum,
       mangaTitle: mangaTitle,
       coverUrl: chapterData.thumb || mangaDetail?.thumb || mangaDetail?.cover || mangaDetail?.coverUrl || '',
+      mangaType: mangaDetail?.type || '',
     });
 
     const goNext = () => {
@@ -819,12 +825,12 @@ async function loadChapter() {
     function togglePlay(playBtn) {
       if (autoScroller.isActive()) {
         autoScroller.stop();
-        playBtn.textContent = '▶';
+        playBtn.innerHTML = typeof ic === 'function' ? ic('play') : '▶';
         playBtn.setAttribute('aria-label', 'Mulai auto-scroll');
         playBtn.title = 'Mulai auto-scroll';
       } else {
         autoScroller.start();
-        playBtn.textContent = '⏸';
+        playBtn.innerHTML = typeof ic === 'function' ? ic('pause') : '⏸';
         playBtn.setAttribute('aria-label', 'Jeda auto-scroll');
         playBtn.title = 'Jeda auto-scroll';
       }
@@ -876,7 +882,7 @@ async function loadChapter() {
         autoScroller.stop();
         const playBtn = bottomBar.querySelector('.reader-bb-btn.is-play');
         if (playBtn) {
-          playBtn.textContent = '▶';
+          playBtn.innerHTML = typeof ic === 'function' ? ic('play') : '▶';
           playBtn.setAttribute('aria-label', 'Mulai auto-scroll');
         }
       }

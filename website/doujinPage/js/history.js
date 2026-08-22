@@ -33,8 +33,11 @@ async function loadServerHistory() {
       const card = document.createElement('div');
       card.className = 'history-item';
 
+      // stempel bendera dari metadata server (baris lama tanpa manga_type → tanpa stempel)
+      const flag = typeof getMangaFlag === 'function' ? getMangaFlag(row.manga_type) : '';
+
       card.innerHTML = `
-        <a class="history-cover" href="/doujinPage/html/detail.html?slug=${encodeURIComponent(row.manga_slug)}">
+        <a class="history-cover" ${flag ? `data-flag="${flag}"` : ''} href="/doujinPage/html/detail.html?slug=${encodeURIComponent(row.manga_slug)}">
           <img src="${escapeHtml(coverUrl)}" alt="${escapeHtml(title)}" loading="lazy" referrerpolicy="no-referrer">
         </a>
         <div class="history-info">
@@ -43,7 +46,7 @@ async function loadServerHistory() {
           </h3>
           <p class="history-meta">Chapter ${escapeHtml(chapterNum)} · halaman ${Number(row.page) || 1}</p>
           <p class="history-date">${escapeHtml(updatedText)}</p>
-          <button class="btn-continue" type="button">▶ LANJUT BACA</button>
+          <button class="btn-continue" type="button">${typeof ic === 'function' ? ic('play') : '▶'} LANJUT BACA</button>
         </div>
       `;
 

@@ -109,8 +109,12 @@ export const saveReadingPositionHandler = (req, res) => {
       mangaTitle = req.body.mangaTitle.trim().slice(0, 200);
     }
     const coverUrl = typeof req.body?.coverUrl === 'string' ? safeHttpUrl(req.body.coverUrl.trim()) : null;
+    let mangaType = null;
+    if (typeof req.body?.mangaType === 'string' && req.body.mangaType.trim()) {
+      mangaType = req.body.mangaType.trim().toLowerCase().slice(0, 20);
+    }
 
-    upsertPosition({ deviceId, mangaSlug, chapterId, page, chapterNum, mangaTitle, coverUrl });
+    upsertPosition({ deviceId, mangaSlug, chapterId, page, chapterNum, mangaTitle, coverUrl, mangaType });
     return res.json({ success: true });
   } catch (err) {
     logger.error({ err }, 'saveReadingPosition error');

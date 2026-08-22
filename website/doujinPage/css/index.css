@@ -1,7 +1,8 @@
 /* =========================================================
    Doujin Library — INDEX PAGE
-   Hero section, sidebar blog, grid manga (card + rating +
-   chapter list singkat), tombol load more.
+   Hero section, sidebar blog/history carousel, judul section,
+   tombol load more.
+   Kartu manga (.manga-card dll.) & grid ada di cards.css.
    Load setelah base.css. Khusus dipakai di index.html.
    ========================================================= */
 
@@ -121,170 +122,6 @@
   border-bottom: 1px solid var(--border-soft);
 }
 
-.manga-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 18px;
-}
-
-/* --- Popular Row --- */
-.popular-row {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-
-.popular-row .manga-card {
-  flex: 0 0 150px;
-  width: 150px;
-}
-
-.popular-row::-webkit-scrollbar {
-  height: 6px;
-}
-
-.popular-row::-webkit-scrollbar-thumb {
-  background: var(--border-soft, #3a352e);
-  border-radius: 3px;
-}
-
-@media (max-width: 600px) {
-  .popular-row .manga-card { flex-basis: 120px; width: 120px; }
-}
-
-.manga-card {
-  position: relative;
-  background: var(--card);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.manga-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--ink-soft);
-  background: var(--card-hover);
-}
-
-.thumb-container {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 3/4;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.thumb-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  filter: saturate(0.92);
-}
-
-.rating-tag {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(21, 18, 15, 0.85);
-  border: 1px solid var(--border-soft);
-  color: var(--gold);
-  padding: 2px 6px;
-  border-radius: var(--radius);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.manga-info {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.manga-title {
-  margin: 0 0 10px;
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 15px;
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* hanko stamp badge */
-.manga-card::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 26px;
-  height: 26px;
-  border: 1.5px solid var(--ink);
-  border-radius: 50%;
-  opacity: 0.85;
-  transform: rotate(-8deg);
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* ---------- chapter list inside cards ---------- */
-
-.chapter-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: auto;
-}
-
-.chapter-btn {
-  background: var(--bg-alt);
-  border: 1px solid var(--border-soft);
-  padding: 6px 8px;
-  border-radius: var(--radius);
-  font-size: 11px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.chapter-btn:hover {
-  background: var(--card-hover);
-  border-color: var(--ink);
-}
-
-.time-ago {
-  color: var(--text-faint);
-  font-size: 10px;
-}
-
-.badge-new {
-  background: var(--ink);
-  color: var(--text);
-  font-size: 9px;
-  padding: 1px 4px;
-  border-radius: 2px;
-  margin-left: 4px;
-  font-weight: bold;
-}
-
-.badge-end {
-  color: var(--ink);
-  font-size: 10px;
-  font-weight: bold;
-  margin-left: 4px;
-}
-
 /* ---------- see more button ---------- */
 
 .load-more-container {
@@ -314,11 +151,6 @@
 
 @media (max-width: 1024px) {
   .hero-section { grid-template-columns: 1fr; }
-  .manga-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (max-width: 700px) {
-  .manga-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* --- History Carousel Sidebar --- */

@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doujin Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="/doujinPage/css/base.css">
-  <link rel="stylesheet" href="/doujinPage/css/components.css">
-  <link rel="stylesheet" href="/doujinPage/css/cards.css">
-  <link rel="stylesheet" href="/doujinPage/css/index.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/doujinPage/css/base.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/components.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/cards.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/index.css?v=3">
 </head>
 <body>
 
@@ -48,7 +50,7 @@
       <div class="hero-banner" style="background-image: linear-gradient(to top, rgba(21,18,15,0.9), transparent), url('https://placehold.co/1200x400/201b16/ece6dc?text=Featured+Manga');">
         <div class="hero-tags">
           <span class="badge badge-ink">MANHWA</span>
-          <span class="badge badge-gold">⭐ 8.8</span>
+          <span class="badge badge-gold"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-star"></use></svg> 8.8</span>
         </div>
         <h2 class="hero-title">I BANGED ALL MY CLASSMATES AFTER GRADUATION</h2>
         <div class="hero-actions">
@@ -69,13 +71,13 @@
 
     <!-- POPULAR SECTION -->
     <section class="manga-section popular-section">
-      <h2 class="section-title">🔥 Populer Saat Ini</h2>
+      <h2 class="section-title"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-flame"></use></svg> Populer Saat Ini</h2>
       <div id="popularGrid" class="popular-row">
         <p class="loading">Memuat manga populer...</p>
       </div>
       <div class="load-more-container">
         <a href="/doujinPage/html/allManga.html?sort=rating" class="btn-see-more">
-          LIHAT SEMUA POPULER →
+          LIHAT SEMUA POPULER <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-arrow-right"></use></svg>
         </a>
       </div>
     </section>
@@ -90,19 +92,19 @@
 
       <div class="load-more-container">
         <a href="/doujinPage/html/allManga.html" class="btn-see-more">
-          VIEW ALL MANGA →
+          VIEW ALL MANGA <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-arrow-right"></use></svg>
         </a>
       </div>
     </section>
 
   </main>
 
-  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-arrow-up"></use></svg></button>
 
-  <script src="/doujinPage/shared/nav.js" defer></script>
-  <script src="/doujinPage/shared/api.js" defer></script>
-  <script src="/doujinPage/shared/ui.js" defer></script>
-  <script src="/doujinPage/shared/storage.js" defer></script>
-  <script src="/doujinPage/js/index.js" defer></script>
+  <script src="/doujinPage/shared/nav.js?v=3" defer></script>
+  <script src="/doujinPage/shared/api.js?v=3" defer></script>
+  <script src="/doujinPage/shared/ui.js?v=3" defer></script>
+  <script src="/doujinPage/shared/storage.js?v=3" defer></script>
+  <script src="/doujinPage/js/index.js?v=3" defer></script>
 </body>
 </html>

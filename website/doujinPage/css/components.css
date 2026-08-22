@@ -1,9 +1,30 @@
 /* =========================================================
    Doujin Library — COMPONENTS
    Shared UI components: section title, buttons, badges,
-   panel title, icon buttons, empty states.
+   panel title, icon buttons, empty states, icon system.
    Load after base.css, before page-specific CSS.
    ========================================================= */
+
+/* ---------- ikon SVG (sprite icons.svg) ----------
+   Pakai: <svg class="ic"><use href="/doujinPage/icons.svg#i-nama"/></svg>
+   Warna mengikuti text color (currentColor), ukuran 1em. */
+
+.ic {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
+}
+
+.ic-fill {
+  fill: currentColor;
+  stroke: none;
+}
 
 /* ---------- section title ---------- */
 

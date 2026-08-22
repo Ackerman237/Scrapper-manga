@@ -111,6 +111,32 @@
   letter-spacing: 0.05em;
 }
 
+/* bendera bundar di dalam badge type */
+.flag-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* ikon di dalam tombol/tab sejajar dengan teks */
+.detail-tab .ic,
+.btn-read-now .ic,
+.btn-bookmark .ic,
+.btn-favorite .ic,
+.meta-item .ic,
+.views-label .ic,
+.show-more-btn .ic,
+.section-title .ic {
+  vertical-align: -0.15em;
+}
+
+/* favorite aktif → ikon heart terisi penuh warna merah */
+.btn-favorite.is-active .ic {
+  fill: currentColor;
+}
+
 .detail-badge.type {
   color: #6fc9a8;
   border-color: rgba(111, 201, 168, 0.35);
@@ -169,25 +195,6 @@
 
 .btn-bookmark:hover {
   border-color: var(--ink);
-}
-
-.btn-favorite {
-    background: transparent;
-    border: 1px solid var(--border-soft);
-    color: var(--text);
-    padding: 10px 14px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: .2s;
-}
-
-.btn-favorite:hover {
-    transform: translateY(-1px);
-}
-
-.btn-favorite.active {
-    color: var(--favorite);
-    border-color: var(--favorite);
 }
 
 .btn-notify {
@@ -411,6 +418,17 @@
   line-height: 1.7;
   color: var(--text-muted);
   margin: 0 0 12px;
+  /* collapsed default: 3 baris */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* pertahankan paragraf (\n\n) hasil cleanSynopsis */
+  white-space: pre-line;
+}
+
+.synopsis-text.expanded {
+  -webkit-line-clamp: unset;
 }
 
 .show-more-btn {
@@ -641,6 +659,49 @@
   transform: translateX(-3px);
 }
 
+/* ---------- rekomendasi manga serupa ----------
+   Desktop: grid biasa (dari cards.css).
+   HP (≤700px): carousel horizontal scroll-snap ala .popular-row,
+   biar tidak makan ruang vertikal setelah halaman detail yang panjang. */
+
+/* beri jarak dari panel chapter di atasnya (sebelumnya dempet/timpa) */
+#recommendSection {
+  margin-top: 36px;
+}
+
+#recommendGrid .manga-card {
+  scroll-snap-align: start;
+}
+
+@media (max-width: 700px) {
+  #recommendGrid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x proximity;
+  }
+
+  #recommendGrid .manga-card {
+    flex: 0 0 140px;
+    width: 140px;
+  }
+
+  /* kartu kompak: sembunyikan tombol chapter di dalam kartu rekomendasi */
+  #recommendGrid .chapter-list {
+    display: none;
+  }
+
+  #recommendGrid::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  #recommendGrid::-webkit-scrollbar-thumb {
+    background: var(--border-soft);
+    border-radius: 3px;
+  }
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1200px) {
@@ -699,6 +760,13 @@
 
   .detail-cover-card {
     position: static;
+  }
+
+  /* pastikan panel chapter menutup rapat & tidak menimpa section di bawahnya */
+  .chapter-sidebar {
+    min-height: auto;
+    height: auto;
+    overflow: visible;
   }
 
   .chapter-panel-head {

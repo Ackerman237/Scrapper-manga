@@ -70,7 +70,7 @@ async function loadManga(query = '', page = 1, sort = 'newest', genre = '', stat
           ? `Tidak ada manga untuk genre ini.`
           : 'Manga tidak ditemukan.';
 
-      const btnLabel = query ? 'LIHAT SEMUA MANGA' : page > 1 ? '← KEMBALI KE HALAMAN SEBELUMNYA' : null;
+      const btnLabel = query ? 'LIHAT SEMUA MANGA' : page > 1 ? `${ic('arrow-left')} KEMBALI KE HALAMAN SEBELUMNYA` : null;
       const btnAction = query
         ? () => { window.location.href = '/doujinPage/html/allManga.html?page=1'; }
         : page > 1

@@ -59,11 +59,11 @@ function renderChapterList() {
 
       const dateSpan = document.createElement("span");
       dateSpan.className = "meta-item";
-      dateSpan.textContent = `🕒 ${chDate}`;
+      dateSpan.innerHTML = `${ic('clock')} ${chDate}`;
 
       const viewsSpan = document.createElement("span");
       viewsSpan.className = "meta-item";
-      viewsSpan.textContent = `👁 ${chViews}`;
+      viewsSpan.innerHTML = `${ic('eye')} ${chViews}`;
 
       metaDiv.appendChild(dateSpan);
       metaDiv.appendChild(viewsSpan);
@@ -82,6 +82,19 @@ function starString(rating) {
   const score = parseFloat(rating) || 0;
   const full = Math.round(score / 2);
   return "★".repeat(Math.min(5, Math.max(0, full))) + "☆".repeat(Math.max(0, 5 - full));
+}
+
+/**
+ * Isi satu baris info detail; sembunyikan seluruh baris (label+nilai)
+ * jika upstream tidak menyediakan datanya, agar panel tidak penuh "—".
+ */
+function setInfoValue(id, text) {
+  const node = el(id);
+  if (!node) return;
+  const raw = typeof text === 'string' ? text.trim() : text;
+  const hasValue = raw && raw !== "-" && raw !== "N/A";
+  node.textContent = hasValue ? raw : "-";
+  if (node.parentElement) node.parentElement.style.display = hasValue ? "" : "none";
 }
 
 async function renderDetail() {
@@ -110,21 +123,22 @@ async function renderDetail() {
       title: titleText,
       slug: mangaSlug,
       thumb: coverUrl,
-      rating: numRating
+      rating: numRating,
+      type: data.type || ""
     };
 
     const bookmarkBtn = el("bookmarkBtn");
     if (bookmarkBtn) {
       const bookmarks = getBookmarks();
       const isBookmarked = Boolean(bookmarks[mangaSlug]);
-      bookmarkBtn.textContent = isBookmarked ? "✅ BOOKMARKED" : "🔖 BOOKMARK";
+      setBookmarkLabel(bookmarkBtn, isBookmarked);
     }
 
     const favoriteBtn = el("favoriteBtn");
     if (favoriteBtn) {
       const favorites = getFavorites();
       const isFavorite = Boolean(favorites[mangaSlug]);
-      favoriteBtn.classList.toggle("active", isFavorite);
+      favoriteBtn.classList.toggle("is-active", isFavorite);
     }
 
     const altTitlesArr = Array.isArray(data.altTitles)
@@ -141,7 +155,8 @@ async function renderDetail() {
     const charactersText = data.characters || "-";
     const statusText = data.status || "Ongoing";
     const typeText = data.type || "Manga";
-    const typeFlagText = data.typeFlag || "??";
+    // typeFlag upstream sering kosong → turunkan dari type; jika tetap tak dikenal, sembunyikan (jangan tampil "??")
+    const typeFlagText = data.typeFlag || getMangaFlag(typeText) || "";
 
     currentChapters = Array.isArray(data.chapters) ? data.chapters : [];
     chapterOrder = 'desc';
@@ -159,19 +174,33 @@ async function renderDetail() {
 
     if (el("mTitle")) el("mTitle").textContent = titleText;
     if (el("mAltTitlesShort")) el("mAltTitlesShort").textContent = altShort;
-    if (el("mTypeFlag")) el("mTypeFlag").textContent = typeFlagText;
+    if (el("mTypeFlag")) {
+      if (typeFlagText) {
+        el("mTypeFlag").src = `/icons/flags/${typeFlagText}.svg`;
+        el("mTypeFlag").style.display = "";
+      } else {
+        el("mTypeFlag").style.display = "none";
+      }
+    }
     if (el("mTypeText")) el("mTypeText").textContent = typeText;
     if (el("mStatusText")) el("mStatusText").textContent = statusText;
 
-    if (el("infoTypeFlag")) el("infoTypeFlag").textContent = typeFlagText;
+    if (el("infoTypeFlag")) {
+      if (typeFlagText) {
+        el("infoTypeFlag").src = `/icons/flags/${typeFlagText}.svg`;
+        el("infoTypeFlag").style.display = "";
+      } else {
+        el("infoTypeFlag").style.display = "none";
+      }
+    }
     if (el("infoType")) el("infoType").textContent = typeText;
     if (el("infoStatus")) el("infoStatus").textContent = statusText;
     if (el("infoAltTitles")) el("infoAltTitles").textContent = altShort;
-    if (el("infoAuthors")) el("infoAuthors").textContent = authorText;
-    if (el("infoGroups")) el("infoGroups").textContent = groupsText;
-    if (el("infoSeries")) el("infoSeries").textContent = seriesText;
-    if (el("infoSerialization")) el("infoSerialization").textContent = serializationText;
-    if (el("infoCharacters")) el("infoCharacters").textContent = charactersText;
+    setInfoValue("infoAuthors", authorText);
+    setInfoValue("infoGroups", groupsText);
+    setInfoValue("infoSeries", seriesText);
+    setInfoValue("infoSerialization", serializationText);
+    setInfoValue("infoCharacters", charactersText);
 
     const genreWrap = el("genreTags");
     if (genreWrap) {
@@ -194,9 +223,14 @@ async function renderDetail() {
       el("viewsValue").textContent = data.views ? Number(data.views).toLocaleString("id-ID") : "-";
     }
 
+    const synopsisContent = cleanSynopsis(data.synopsis || data.summary || data.description || '');
+    const synopsisPanel = el("synopsisPanel");
     if (el("synopsisText")) {
-      el("synopsisText").textContent = cleanSynopsis(data.synopsis || data.summary || data.description || '');
+      el("synopsisText").textContent = synopsisContent;
+      el("synopsisText").classList.remove("expanded");
     }
+    if (el("synopsisToggle")) el("synopsisToggle").style.display = synopsisContent ? "" : "none";
+    if (synopsisPanel) synopsisPanel.style.display = synopsisContent ? "" : "none";
 
     renderChapterList();
 
@@ -204,14 +238,14 @@ async function renderDetail() {
     if (readNowBtn) {
       const lastRead = getLastReadChapter(mangaSlug);
       if (lastRead) {
-        readNowBtn.textContent = `▶ CONTINUE CHAPTER ${lastRead.chapter}`;
+        readNowBtn.innerHTML = `${ic('play')} CONTINUE CHAPTER ${lastRead.chapter}`;
         readNowBtn.onclick = () => {
           window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(lastRead.chapterId)}`;
         };
       } else if (chaptersAsc.length > 0) {
         const firstCh = chaptersAsc[0];
         const firstChId = firstCh.id || firstCh.chapter_id || firstCh.number || firstCh.chapter;
-        readNowBtn.textContent = "▶ READ NOW";
+        readNowBtn.innerHTML = `${ic('play')} READ NOW`;
         readNowBtn.onclick = () => {
           window.location.href = `/doujinPage/html/reader.html?id=${encodeURIComponent(firstChId)}`;
         };
@@ -281,6 +315,11 @@ async function loadRecommendations(currentSlug, genresArr) {
   }
 }
 
+/** Perbarui label tombol bookmark beserta ikonnya. */
+function setBookmarkLabel(btn, active) {
+  btn.innerHTML = `${ic(active ? 'bookmark-check' : 'bookmark')} <span class="btn-label">${active ? 'BOOKMARKED' : 'BOOKMARK'}</span>`;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderDetail();
 
@@ -289,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bookmarkBtn.addEventListener("click", () => {
       if (!currentManga) return;
       const active = toggleBookmark(currentManga);
-      bookmarkBtn.textContent = active ? "✅ BOOKMARKED" : "🔖 BOOKMARK";
+      setBookmarkLabel(bookmarkBtn, active);
     });
   }
 
@@ -298,7 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
     favoriteBtn.addEventListener("click", () => {
       if (!currentManga) return;
       const active = toggleFavorite(currentManga);
-      favoriteBtn.classList.toggle("active", active);
+      favoriteBtn.classList.toggle("is-active", active);
     });
   }
 
@@ -314,7 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (chapterSortBtn) {
     chapterSortBtn.addEventListener("click", () => {
       chapterOrder = chapterOrder === "desc" ? "asc" : "desc";
-      chapterSortBtn.textContent = chapterOrder === "asc" ? "⬆" : "⇅";
+      chapterSortBtn.innerHTML = ic(chapterOrder === "asc" ? 'arrow-up' : 'arrow-up-down');
       renderChapterList();
     });
   }
@@ -329,14 +368,9 @@ document.addEventListener("DOMContentLoaded", () => {
   el("synopsisToggle")?.addEventListener("click", () => {
     const p = el("synopsisText");
     const toggleBtn = el("synopsisToggle");
-    if (p && toggleBtn) {
-      const expanded = p.style.webkitLineClamp === "unset";
-      p.style.display = expanded ? "-webkit-box" : "block";
-      p.style.webkitLineClamp = expanded ? "3" : "unset";
-      p.style.webkitBoxOrient = "vertical";
-      p.style.overflow = expanded ? "hidden" : "visible";
-      toggleBtn.textContent = expanded ? "SHOW MORE ▾" : "SHOW LESS ▴";
-    }
+    if (!p || !toggleBtn) return;
+    const expanded = p.classList.toggle("expanded");
+    toggleBtn.innerHTML = expanded ? `SHOW LESS ${ic('chevron-up')}` : `SHOW MORE ${ic('chevron-down')}`;
   });
 
   setupBackToTop(el("backToTop"), 400);
@@ -377,7 +411,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function cleanSynopsis(raw) {
-  if (!raw || typeof raw !== 'string') return 'Tidak ada sinopsis.';
+  if (!raw || typeof raw !== 'string') return '';
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(raw, 'text/html');
@@ -397,7 +431,7 @@ function cleanSynopsis(raw) {
   if (parts.length === 0) {
     const text = doc.body.textContent.replace(/\s+/g, ' ').trim();
     const cleaned = text.split(/download\s*batch/i)[0].trim();
-    return cleaned || 'Tidak ada sinopsis.';
+    return cleaned;
   }
 
   return parts.join('\n\n');

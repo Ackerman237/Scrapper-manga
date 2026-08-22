@@ -6,7 +6,7 @@
    Wajib di-load di SEMUA halaman, SEBELUM file spesifik halaman.
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+/* Font Google dimuat via <link> di <head> tiap halaman (lebih cepat dari @import) */
 
 /* pengaman global anti horizontal-scroll */
 html, body {

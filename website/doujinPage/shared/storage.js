@@ -16,6 +16,7 @@ function toggleBookmark(manga) {
     slug: manga.slug,
     thumb: manga.thumb,
     rating: manga.rating,
+    type: manga.type || '',
     savedAt: new Date().toISOString(),
   };
   localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
@@ -38,6 +39,7 @@ function toggleFavorite(manga) {
     slug: manga.slug,
     thumb: manga.thumb,
     rating: manga.rating,
+    type: manga.type || '',
     savedAt: new Date().toISOString(),
   };
   localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -57,7 +59,9 @@ function saveReadingHistory(data) {
   let history = getReadingHistory();
   const index = history.findIndex((item) => item.slug === data.slug);
   if (index !== -1) history.splice(index, 1);
-  history.unshift(data);
+  // type disertakan bila tersedia — dipakai untuk stempel bendera di kartu riwayat
+  const entry = { ...data, type: data.type || '' };
+  history.unshift(entry);
   history = history.slice(0, 10);
   localStorage.setItem('history', JSON.stringify(history));
 }
@@ -126,6 +130,7 @@ async function saveProgressToServer(data) {
         chapterNum: data.chapterNum != null ? String(data.chapterNum) : null,
         mangaTitle: data.mangaTitle || null,
         coverUrl: data.coverUrl || null,
+        mangaType: data.mangaType || null,
       }),
     });
   } catch {

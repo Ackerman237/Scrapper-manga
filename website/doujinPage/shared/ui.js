@@ -127,12 +127,21 @@ function renderPaginationControls({ page, totalPages, hasPrevious, hasNext, onPa
   });
 }
 
+/** Markup ikon SVG dari sprite bersama (lihat doujinPage/icons.svg). */
+function ic(name) {
+  return `<svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-${name}"></use></svg>`;
+}
+
+/**
+ * Kode bendera negara untuk tipe manga — dipakai sebagai stempel bundar
+ * di kartu (aset: /icons/flags/<kode>.svg). Kosong jika tipe tak dikenal.
+ */
 function getMangaFlag(type) {
   const t = (type || '').toLowerCase();
-  if (t === 'manga') return '🇯🇵';
-  if (t === 'manhwa') return '🇰🇷';
-  if (t === 'manhua') return '🇨🇳';
-  if (t === 'doujinshi') return '🇯🇵';
+  if (t === 'manga') return 'jp';
+  if (t === 'manhwa') return 'kr';
+  if (t === 'manhua') return 'cn';
+  if (t === 'doujinshi') return 'jp';
   return '';
 }
 
@@ -144,10 +153,10 @@ function renderMangaCard(manga) {
   const flag = getMangaFlag(manga.type);
   if (flag) card.dataset.flag = flag;
 
-  // Proxy cover lewat server agar tidak diblokir hotlink protection
+  // Proxy cover lewat server: ?w=300 → server resize+optimasi via sharp (hemat bandwidth)
   const rawThumb = manga.thumb || manga.cover || '';
   const thumbSrc = rawThumb
-    ? `/api/image-proxy?url=${encodeURIComponent(rawThumb)}`
+    ? `/api/image-proxy?url=${encodeURIComponent(rawThumb)}&w=300`
     : 'https://placehold.co/110x140?text=No+Cover';
 
   let chaptersHTML = '';
@@ -168,7 +177,7 @@ function renderMangaCard(manga) {
   card.innerHTML = `
     <div class="thumb-container" data-slug="${mangaSlug}">
       <img src="${thumbSrc}" alt="${manga.title || ''}" loading="lazy">
-      <span class="rating-tag">⭐ ${manga.rating ?? '-'}</span>
+      <span class="rating-tag">${ic('star')} ${manga.rating ?? '-'}</span>
     </div>
     <div class="manga-info">
       <h3 class="manga-title" data-slug="${mangaSlug}">${manga.title || ''}</h3>

@@ -46,9 +46,15 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
     const card = document.createElement("div");
     card.className = "manga-card" + (index >= INITIAL_VISIBLE_COUNT ? " is-hidden" : "");
 
-    const coverUrl = item.thumb || "https://placehold.co/180x240?text=No+Cover";
+    const coverUrl = item.thumb
+      ? `/api/image-proxy?url=${encodeURIComponent(item.thumb)}&w=300`
+      : "https://placehold.co/180x240?text=No+Cover";
     const title = item.title || "Tanpa Judul";
     const rating = item.rating ? Number(item.rating).toFixed(1) : '-';
+
+    // bendera asal manga (entri lama tanpa `type` → tanpa stempel, bukan error)
+    const flag = typeof getMangaFlag === 'function' ? getMangaFlag(item.type) : '';
+    if (flag) card.dataset.flag = flag;
 
     card.innerHTML = `
       <div class="manga-card-thumb" style="background-image: url('${coverUrl}')" data-detail="${encodeURIComponent(item.slug)}"></div>
@@ -57,8 +63,8 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
           <h3 class="manga-card-title" data-detail="${encodeURIComponent(item.slug)}" style="cursor: pointer;">${title}</h3>
         </div>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-          <span class="manga-card-meta">⭐ ${rating}</span>
-          ${storageKey === 'bookmarks' ? `<button class="btn-remove-item" title="Hapus" style="background: none; border: none; cursor: pointer; font-size: 14px;">🗑️</button>` : ''}
+          <span class="manga-card-meta">${ic('star')} ${rating}</span>
+          ${storageKey === 'bookmarks' ? `<button class="btn-remove-item" title="Hapus" style="background: none; border: none; cursor: pointer; font-size: 14px;">${ic('trash-2')}</button>` : ''}
         </div>
       </div>
     `;
@@ -95,7 +101,7 @@ function renderLibrarySection(storageKey, gridId, emptyId, btnId) {
           card.classList.toggle("is-revealed", isExpanded);
         }
       });
-      seeMoreBtn.textContent = isExpanded ? "SHOW LESS ▴" : "SEE MORE ▾";
+      seeMoreBtn.innerHTML = isExpanded ? `SHOW LESS ${ic('chevron-up')}` : `SEE MORE ${ic('chevron-down')}`;
     };
   } else if (seeMoreBtn) {
     seeMoreBtn.style.display = "none";

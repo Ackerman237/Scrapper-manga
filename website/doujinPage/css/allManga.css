@@ -272,33 +272,9 @@
 }
 
 
-/* =========================================================
-   HANKO STAMP
-   ========================================================= */
-
-.manga-card::before {
-  content: '';
-
-  position: absolute;
-
-  top: 8px;
-  right: 8px;
-
-  width: 26px;
-  height: 26px;
-
-  border: 1.5px solid var(--ink);
-
-  border-radius: 50%;
-
-  opacity: 0.85;
-
-  transform: rotate(-8deg);
-
-  pointer-events: none;
-
-  z-index: 2;
-}
+/* HANKO STAMP: sudah ada di cards.css (content: attr(data-flag)).
+   Duplikat di file ini dulu menimpanya dengan content:'' sehingga
+   bendera 🇯🇵/🇰🇷 tidak pernah tampil di halaman ALL. */
 
 
 /* =========================================================

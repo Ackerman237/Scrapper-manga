@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Library & Bookmarks — Doujin Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="/doujinPage/css/base.css">
-  <link rel="stylesheet" href="/doujinPage/css/components.css">
-  <link rel="stylesheet" href="/doujinPage/css/cards.css">
-  <link rel="stylesheet" href="/doujinPage/css/library.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/doujinPage/css/base.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/components.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/cards.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/library.css?v=3">
 </head>
 <body>
   <!-- HEADER / NAVBAR -->
@@ -50,29 +52,29 @@
 
     <section class="library-section">
       <div class="section-header">
-        <h2>❤️ Favorite Manga</h2>
+        <h2><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-heart"></use></svg> Favorite Manga</h2>
       </div>
       <div class="manga-grid" id="favoriteGrid"></div>
       <div class="empty-state" id="favoriteEmpty" style="display: none;">Belum ada manga yang ditambahkan ke Favorite.</div>
-      <button class="see-more-btn" id="favoriteSeeMore" style="display: none;">SEE MORE ▾</button>
+      <button class="see-more-btn" id="favoriteSeeMore" style="display: none;">SEE MORE <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-chevron-down"></use></svg></button>
     </section>
 
     <section class="library-section">
       <div class="section-header">
-        <h2>🔖 Bookmarked Manga</h2>
+        <h2><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-bookmark"></use></svg> Bookmarked Manga</h2>
       </div>
       <div class="manga-grid" id="bookmarkGrid"></div>
       <div class="empty-state" id="bookmarkEmpty" style="display: none;">Belum ada manga yang di-bookmark.</div>
-      <button class="see-more-btn" id="bookmarkSeeMore" style="display: none;">SEE MORE ▾</button>
+      <button class="see-more-btn" id="bookmarkSeeMore" style="display: none;">SEE MORE <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-chevron-down"></use></svg></button>
     </section>
   </main>
 
-  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-arrow-up"></use></svg></button>
 
-  <script src="/doujinPage/shared/nav.js" defer></script>
-  <script src="/doujinPage/shared/api.js" defer></script>
-  <script src="/doujinPage/shared/ui.js" defer></script>
-  <script src="/doujinPage/shared/storage.js" defer></script>
-  <script src="/doujinPage/js/library.js" defer></script>
+  <script src="/doujinPage/shared/nav.js?v=3" defer></script>
+  <script src="/doujinPage/shared/api.js?v=3" defer></script>
+  <script src="/doujinPage/shared/ui.js?v=3" defer></script>
+  <script src="/doujinPage/shared/storage.js?v=3" defer></script>
+  <script src="/doujinPage/js/library.js?v=3" defer></script>
 </body>
 </html>

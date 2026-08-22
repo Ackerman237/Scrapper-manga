@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Manga — Doujin Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="/doujinPage/css/base.css">
-  <link rel="stylesheet" href="/doujinPage/css/components.css">
-  <link rel="stylesheet" href="/doujinPage/css/cards.css">
-  <link rel="stylesheet" href="/doujinPage/css/detail.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/doujinPage/css/base.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/components.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/cards.css?v=3">
+  <link rel="stylesheet" href="/doujinPage/css/detail.css?v=3">
 </head>
 
 <body>
@@ -44,7 +46,7 @@
 
   <div class="back-home-container">
     <a href="/doujinPage/html/index.html" class="back-home-btn">
-      ← BACK TO HOME
+      <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-arrow-left"></use></svg> BACK TO HOME
     </a>
   </div>
 
@@ -62,53 +64,53 @@
 
           <h2 class="detail-title" id="mTitle">—</h2>
           <p class="detail-alt-titles" id="mAltTitlesShort">—</p>
-          <button class="detail-alt-toggle" id="altTitlesToggle" type="button">▾</button>
+          <button class="detail-alt-toggle" id="altTitlesToggle" type="button"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-chevron-down"></use></svg></button>
 
           <div class="detail-badge-row">
             <span class="detail-badge type" id="mTypeBadge">
-              <span id="mTypeFlag">🇰🇷</span> <span id="mTypeText">Manhwa</span>
+              <img id="mTypeFlag" class="flag-badge" src="/icons/flags/kr.svg" alt=""> <span id="mTypeText">Manhwa</span>
             </span>
             <span class="detail-badge status" id="mStatusBadge">
-              ⟳ <span id="mStatusText">Ongoing</span>
+              <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-refresh-cw"></use></svg> <span id="mStatusText">Ongoing</span>
             </span>
           </div>
 
           <button class="btn-read-now" id="readNowBtn" type="button">
-            📖 READ NOW
+            <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-book-open"></use></svg> READ NOW
           </button>
 
           <div class="detail-secondary-row">
-            <button class="btn-bookmark" id="bookmarkBtn" type="button">🔖 BOOKMARK</button>
-            <button class="btn-favorite" id="favoriteBtn" type="button">❤️ FAVORITE</button>
-            <button class="btn-notify" id="notifyBtn" type="button" aria-label="Notifikasi">🔔</button>
+            <button class="btn-bookmark" id="bookmarkBtn" type="button"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-bookmark"></use></svg> <span class="btn-label">BOOKMARK</span></button>
+            <button class="btn-favorite" id="favoriteBtn" type="button"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-heart"></use></svg> <span class="btn-label">FAVORITE</span></button>
+            <button class="btn-notify" id="notifyBtn" type="button" aria-label="Notifikasi"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-bell"></use></svg></button>
           </div>
 
           <div class="detail-icon-row">
-            <button class="icon-btn" id="listIconBtn" title="Daftar chapter">☰</button>
-            <button class="icon-btn" id="commentIconBtn" title="Komentar">💬</button>
-            <button class="icon-btn" id="shareIconBtn" title="Bagikan">🔗</button>
-            <button class="icon-btn" id="reportIconBtn" title="Laporkan">⚑</button>
+            <button class="icon-btn" id="listIconBtn" title="Daftar chapter"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-list"></use></svg></button>
+            <button class="icon-btn" id="commentIconBtn" title="Komentar"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-message-circle"></use></svg></button>
+            <button class="icon-btn" id="shareIconBtn" title="Bagikan"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-share-2"></use></svg></button>
+            <button class="icon-btn" id="reportIconBtn" title="Laporkan"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-flag"></use></svg></button>
           </div>
         </aside>
 
         <div class="detail-main">
           <div class="detail-tabs">
-            <button class="detail-tab active" id="tabInfo" type="button">📖 Detail Info</button>
-            <button class="detail-tab" id="tabMoreSeries" type="button">👍 More Series</button>
+            <button class="detail-tab active" id="tabInfo" type="button"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-book-open"></use></svg> Detail Info</button>
+            <button class="detail-tab" id="tabMoreSeries" type="button"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-thumbs-up"></use></svg> More Series</button>
           </div>
 
           <section class="panel">
-            <h3 class="panel-title"><span class="icon">ⓘ</span> Series Information</h3>
+            <h3 class="panel-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-info"></use></svg></span> Series Information</h3>
 
             <div class="info-body">
               <div class="info-grid">
                 <div>
                   <div class="info-row-label">TYPE</div>
-                  <div class="info-row-value"><span id="infoTypeFlag">🇰🇷</span> <span id="infoType">—</span></div>
+                  <div class="info-row-value"><img id="infoTypeFlag" class="flag-badge" src="/icons/flags/kr.svg" alt=""> <span id="infoType">—</span></div>
                 </div>
                 <div>
                   <div class="info-row-label">STATUS</div>
-                  <div class="info-row-value" style="color:var(--ink);">⟳ <span id="infoStatus">—</span></div>
+                  <div class="info-row-value" style="color:var(--ink);"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-refresh-cw"></use></svg> <span id="infoStatus">—</span></div>
                 </div>
                 <div>
                   <div class="info-row-label">ALTERNATIVE TITLES</div>
@@ -142,7 +144,7 @@
                   <div class="rating-stars" id="ratingStars">★★★★☆</div>
                 </div>
                 <div class="rating-views">
-                  <div class="views-label">👁 VIEWS</div>
+                  <div class="views-label"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-eye"></use></svg> VIEWS</div>
                   <div class="views-value" id="viewsValue">0</div>
                 </div>
               </div>
@@ -154,23 +156,23 @@
             </div>
           </section>
 
-          <section class="panel">
-            <h3 class="panel-title"><span class="icon">☰</span> Synopsis</h3>
+          <section class="panel" id="synopsisPanel">
+            <h3 class="panel-title"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-list"></use></svg></span> Synopsis</h3>
             <p class="synopsis-text" id="synopsisText">—</p>
-            <button class="show-more-btn" id="synopsisToggle" type="button">SHOW MORE ▾</button>
+            <button class="show-more-btn" id="synopsisToggle" type="button">SHOW MORE <svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-chevron-down"></use></svg></button>
           </section>
         </div>
 
         <aside class="chapter-sidebar">
           <section class="panel chapter-panel">
             <div class="chapter-panel-head">
-              <h3 class="panel-title" style="margin:0;"><span class="icon">📖</span> List Chapter (<span id="chapterCount">0</span>)</h3>
+              <h3 class="panel-title" style="margin:0;"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-book-open"></use></svg></span> List Chapter (<span id="chapterCount">0</span>)</h3>
               <div class="chapter-tools">
                 <div class="chapter-search">
-                  <span class="icon">🔍</span>
+                  <span class="icon"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-search"></use></svg></span>
                   <input type="text" id="chapterSearch" placeholder="Cari Chapter Ex: 99">
                 </div>
-                <button class="sort-btn" id="chapterSortBtn" title="Urutkan">⇅</button>
+                <button class="sort-btn" id="chapterSortBtn" title="Urutkan"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-arrow-up-down"></use></svg></button>
               </div>
             </div>
 
@@ -185,17 +187,17 @@
 
     <!-- REKOMENDASI MANGA SERUPA -->
     <section class="manga-section" id="recommendSection" style="display:none;">
-      <h2 class="section-title">✨ Manga Serupa</h2>
+      <h2 class="section-title"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-sparkles"></use></svg> Manga Serupa</h2>
       <div id="recommendGrid" class="manga-grid"></div>
     </section>
   </main>
 
-  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas"><svg class="ic" aria-hidden="true"><use href="/doujinPage/icons.svg#i-arrow-up"></use></svg></button>
 
-  <script src="/doujinPage/shared/nav.js" defer></script>
-  <script src="/doujinPage/shared/api.js" defer></script>
-  <script src="/doujinPage/shared/ui.js" defer></script>
-  <script src="/doujinPage/shared/storage.js" defer></script>
-  <script src="/doujinPage/js/detail.js" defer></script>
+  <script src="/doujinPage/shared/nav.js?v=3" defer></script>
+  <script src="/doujinPage/shared/api.js?v=3" defer></script>
+  <script src="/doujinPage/shared/ui.js?v=3" defer></script>
+  <script src="/doujinPage/shared/storage.js?v=3" defer></script>
+  <script src="/doujinPage/js/detail.js?v=3" defer></script>
 </body>
 </html>

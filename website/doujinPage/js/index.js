@@ -22,6 +22,10 @@ function renderHomeHistory() {
     card.href = `/doujinPage/html/detail.html?slug=${encodeURIComponent(item.slug)}`;
     card.className = 'history-card';
 
+    // stempel bendera (entri riwayat lama tanpa `type` → tanpa stempel)
+    const flag = typeof getMangaFlag === 'function' ? getMangaFlag(item.type) : '';
+    if (flag) card.dataset.flag = flag;
+
     const thumbUrl = item.thumb || 'https://placehold.co/110x140?text=No+Cover';
     const formattedDate = item.lastRead ? new Date(item.lastRead).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-';
 

@@ -1,4 +1,5 @@
 import { safeHttpUrl } from '../lib/security.js';
+import sharp from 'sharp';
 import {
   scrapeMangaList,
   scrapeMangaDetail,
@@ -98,6 +99,8 @@ export const getChapterImages = async (req, res) => {
 const IMAGE_PROXY_TIMEOUT_MS = Number(process.env.IMAGE_PROXY_TIMEOUT_MS) || 20_000;
 const IMAGE_MAX_SIZE = 10 * 1024 * 1024;
 const IMAGE_CACHE_MAX_ENTRIES = 150;
+// Header cache: cover URL unik per manga, aman di-cache browser jangka panjang
+const IMAGE_CACHE_CONTROL = 'public, max-age=604800';
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const PROXY_IMAGE_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
@@ -122,6 +125,17 @@ function imageCacheSet(key, entry) {
     if (oldestKey === undefined) break;
     imageCache.delete(oldestKey);
   }
+}
+
+/**
+ * Validasi parameter thumbnail ?w= (lebar target dalam px).
+ * Return null jika tidak valid/tidak diminta → stream gambar asli.
+ */
+function parseThumbWidth(raw) {
+  if (raw === undefined || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 16 || n > 2000) return null;
+  return Math.round(n);
 }
 
 async function openUpstreamImage(safeUrl) {
@@ -158,9 +172,13 @@ export const proxyImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'URL gambar tidak valid' });
     }
 
-    const cached = imageCacheGet(safeUrl);
+    const thumbWidth = parseThumbWidth(req.query.w);
+    const cacheKey = thumbWidth ? `${safeUrl}|w=${thumbWidth}` : safeUrl;
+
+    const cached = imageCacheGet(cacheKey);
     if (cached) {
       res.setHeader('Content-Type', cached.contentType);
+      res.setHeader('Cache-Control', IMAGE_CACHE_CONTROL);
       res.setHeader('X-Cache', 'HIT');
       return res.send(cached.buffer);
     }
@@ -193,7 +211,64 @@ export const proxyImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Response bukan file gambar' });
     }
 
+    // ---- Thumbnail (?w=): buffer lalu optimasi via sharp (gif dilewati) ----
+    if (thumbWidth && !contentType.includes('image/gif')) {
+      let input = null;
+      try {
+        let total = 0;
+        const chunks = [];
+        const reader = response.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          total += value.byteLength;
+          if (total > IMAGE_MAX_SIZE) {
+            controller.abort();
+            return res.status(413).json({ success: false, message: 'Gambar terlalu besar' });
+          }
+          chunks.push(Buffer.from(value));
+        }
+        input = Buffer.concat(chunks);
+      } catch (err) {
+        clearTimeout(timer);
+        logger.warn({ err }, 'proxyImage gagal membaca upstream untuk thumbnail');
+        return res.status(502).json({ success: false, message: 'Gagal mengambil gambar dari sumber' });
+      }
+
+      let optimized = null;
+      try {
+        optimized = await sharp(input)
+          .rotate() // hormati orientasi EXIF
+          .resize({ width: thumbWidth, withoutEnlargement: true })
+          .webp({ quality: 70 })
+          .toBuffer();
+      } catch (err) {
+        logger.warn({ err }, 'proxyImage sharp gagal — fallback kirim file asli');
+      }
+
+      if (optimized) {
+        res.setHeader('Content-Type', 'image/webp');
+        res.setHeader('Cache-Control', IMAGE_CACHE_CONTROL);
+        res.setHeader('X-Cache', 'MISS');
+        res.send(optimized);
+        imageCacheSet(cacheKey, { contentType: 'image/webp', buffer: optimized });
+        return;
+      }
+      // sharp gagal → jatuh ke path streaming di bawah dengan data yang sudah dibaca
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', IMAGE_CACHE_CONTROL);
+      res.setHeader('X-Cache', 'MISS');
+      if (input && input.length > 0) {
+        imageCacheSet(cacheKey, { contentType, buffer: input });
+        res.setHeader('Content-Length', String(input.byteLength));
+        return res.send(input);
+      }
+      return res.status(502).json({ success: false, message: 'Gagal memproses gambar' });
+    }
+    // ------------------------------------------------------------------------
+
     res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', IMAGE_CACHE_CONTROL);
     res.setHeader('X-Cache', 'MISS');
 
     let total = 0;
@@ -219,7 +294,7 @@ export const proxyImage = async (req, res) => {
     res.end();
 
     if (!tooLarge && total > 0) {
-      imageCacheSet(safeUrl, { contentType, buffer: Buffer.concat(chunks) });
+      imageCacheSet(cacheKey, { contentType, buffer: Buffer.concat(chunks) });
     }
   } catch (err) {
     logger.error({ err }, 'proxyImage error');
