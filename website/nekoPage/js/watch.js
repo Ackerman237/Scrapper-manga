@@ -40,11 +40,12 @@ async function loadDetail() {
           externalPlayerBtn.href = playerUrl;
           externalFallbackContainer.style.display = 'block';
 
-          // Gunakan proxy-player agar tidak diblokir Cloudflare
+          // Replikasi pola nekopoi.care: iframe LANGSUNG ke penyedia tanpa sandbox.
+          // Atribut sandbox justru memicu deteksi frameElement.hasAttribute("sandbox")
+          // di streampoi/playmogo yang me-redirect ke /blocked.
           playerBox.innerHTML = `
             <iframe
-              src="/api/neko/proxy-player?url=${encodeURIComponent(playerUrl)}"
-              sandbox="allow-scripts allow-same-origin allow-presentation"
+              src="${playerUrl}"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
             ></iframe>
@@ -59,8 +60,7 @@ async function loadDetail() {
       externalFallbackContainer.style.display = 'block';
       playerBox.innerHTML = `
         <iframe
-          src="/api/neko/proxy-player?url=${encodeURIComponent(firstUrl)}"
-          sandbox="allow-scripts allow-same-origin allow-presentation"
+          src="${firstUrl}"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen
         ></iframe>
