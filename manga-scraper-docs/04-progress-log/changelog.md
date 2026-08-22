@@ -5,6 +5,86 @@ notes live in `reports/`.
 
 ---
 
+## 2026-08-22 — Fitur baru: gap analysis doujin.desu.xxx & nekopoi.care (Fase A–C)
+
+### Fase A — Doujin quick wins
+
+**[A1] Filter status & type di allManga**
+- `lib/validator.js`: tambah `validateEnum(value, allowed, fallback)` (case-insensitive, trim).
+- `controllers/mangaController.js`: terima param `status` (ongoing/completed/hiatus)
+  dan `type` (manga/manhwa/manhua) dengan whitelist; diteruskan ke `scrapeMangaList`
+  yang memang sudah support kedua param ini.
+- Frontend `allManga.html` + `allManga.js`: dropdown STATUS & TIPE; filter ikut di URL.
+
+**[A2] Section "Populer Saat Ini" di homepage**
+- `index.js`: panggil `/api/manga?sort=rating&page=1&limit=12`, render horizontal row.
+- `index.css`: style `.popular-row`; bfcache pageshow handler kini mencakup semua img di main.
+
+**[A3] Rekomendasi "Manga Serupa" di halaman detail**
+- `detail.js`: `loadRecommendations()` — fetch list berdasarkan genre pertama manga aktif,
+  exclude slug sendiri, maksimal 6 item. Best-effort (gagal = section tidak tampil).
+
+### Fase B — Ekspansi Nekopoi
+
+**[B4] Jadwal New Hentai**
+- `nekoScraper.js`: `scrapeNekoSchedule()` + parser toleran (heading nama hari membuka
+  grup, anchor internal dimasukkan ke grup aktif); cache 30 menit.
+- Endpoint `GET /api/neko/schedule`; section jadwal di `nekoPage/index.html`.
+
+**[B5] Daftar seri Hentai/JAV**
+- `scrapeNekoSeriesList(type, page)` untuk `/hentai-list/` & `/jav-list/`
+  (reuse parseCards + parseSearchItems dengan dedup).
+- Endpoint `GET /api/neko/series?type=hentai|jav&page=N`; halaman baru
+  `series.html` + `series.js` dengan tab Hentai/JAV dan pagination.
+
+**[B6] Tombol Acak**
+- `scrapeNekoRandom()`: fetch `${BASE}/random` dengan `redirect: 'manual'`,
+  ambil slug dari Location header. Retry via VPN route; error ASLI dilempar
+  jika retry juga gagal (bug retry-swallow ditemukan oleh unit test).
+- Endpoint `GET /api/neko/random`; tombol 🎲 ACAK di neko index.
+
+**[B7] Video terkait di halaman watch**
+- `parseRelated(html)`: cari heading rekomendasi/related, ekstrak anchor internal
+  (judul dari h-tag/alt, thumb dari img/background-image), maksimal 8.
+- Field baru `related` pada hasil `scrapeNekoDetail()`; grid "Video Terkait"
+  di `watch.html`.
+
+> **Catatan verifikasi:** parser B4/B5/B7 ditulis defensif (multi-pola fallback)
+> karena halaman target tidak dapat diinspeksi langsung dari jaringan pengembangan
+> (TLS intercept + blokir ISP). Perlu sanity check live sekali via VPN sebelum
+> dianggap stabil. Unit test memakai fixture sintetis sesuai struktur yang diasumsikan.
+
+### Fase C — UX personal
+
+**[C8] Halaman Riwayat Baca (`history.html`)**
+- `lib/db.js`: migrasi ringan — kolom opsional `manga_title`, `cover_url`
+  (ALTER TABLE bila belum ada; baris lama tetap valid). `getAllPositions`
+  mengembalikan kolom baru.
+- `progressController.js`: POST /progress menerima `mangaTitle` + `coverUrl`
+  opsional (cover divalidasi `safeHttpUrl`).
+- `reader.js` + `storage.js`: kirim metadata saat menyimpan posisi.
+- Halaman `history.html` + `history.js` konsumsi `/api/progress/all`
+  (header x-device-id): cover, judul, chapter, tombol LANJUT BACA.
+- Nav: link HISTORY menggantikan posisi kosong antara ALL dan LIBRARY.
+
+**[C9] Fix known issue: continue-reading scroll restore aktif kembali**
+- Akar masalah lama: `scrollIntoView` dipanggil sebelum IntersectionObserver
+  terdaftar → gambar tidak pernah dimuat.
+- Fix: helper `scrollToReadingPosition(container, page)` dipanggil SETELAH
+  `setupLazyImages()`; buffer-load halaman sekitar target ±2; rAF + 250ms delay
+  agar layout settle. Posisi dari server juga kini ikut scroll.
+- Komentar known issue di `storage.js` diperbarui.
+
+### Testing
+- Test baru `tests/nekoFeatures.test.js` (7 test offline, fetch di-stub):
+  parsing jadwal per hari, daftar seri nk-search-item, penolakan type invalid,
+  path pagination jav-list, redirect manual random, error redirect kosong.
+- `validateEnum` test (5 kasus) di `tests/validator.test.js`.
+- Mock integration diperbarui untuk 3 fungsi nekoScraper baru.
+- Total: **128 tests passing across 8 files** (sebelumnya 116/7).
+
+---
+
 ## 2026-08-21 (2) — Bug fixes: E1 500→404, E2 chapter.number kosong
 
 ### Bug fixes
