@@ -430,9 +430,14 @@ function buildSettingsPanel({ imageList }) {
   widthInput.type = 'range';
   widthInput.min = '60';
   widthInput.max = '100';
-  widthInput.value = '100';
+  // Persist: muat nilai tersimpan dari localStorage, fallback 100
+  const savedWidth = localStorage.getItem('readerPageWidth') || '100';
+  widthInput.value = savedWidth;
+  imageList.style.setProperty('--page-w', `${savedWidth}%`);
   widthInput.addEventListener('input', () => {
-    imageList.style.setProperty('--page-w', `${widthInput.value}%`);
+    const val = `${widthInput.value}%`;
+    imageList.style.setProperty('--page-w', val);
+    localStorage.setItem('readerPageWidth', String(widthInput.value));
   });
   widthRow.append(widthLabel, widthInput);
 
@@ -444,8 +449,12 @@ function buildSettingsPanel({ imageList }) {
   speedInput.type = 'range';
   speedInput.min = '1';
   speedInput.max = '10';
-  speedInput.value = '4';
+  // Persist: muat nilai tersimpan dari localStorage, fallback 4
+  speedInput.value = localStorage.getItem('readerAutoScrollSpeed') || '4';
   speedInput.id = 'readerAutoScrollSpeed';
+  speedInput.addEventListener('change', () => {
+    localStorage.setItem('readerAutoScrollSpeed', String(speedInput.value));
+  });
   speedRow.append(speedLabel, speedInput);
 
   body.append(widthRow, speedRow);

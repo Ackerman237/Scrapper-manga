@@ -59,8 +59,6 @@ async function loadCategories() {
     result.data.forEach(cat => {
       const btn = document.createElement('button');
       btn.className = 'category-btn';
-      // Gunakan slug untuk endpoint backend, tampilkan name di UI
-      currentCategory = cat.slug;
       btn.textContent = cat.name || cat.slug;
       btn.addEventListener('click', () => {
         // Reset query saat pindah kategori agar filter bersih
