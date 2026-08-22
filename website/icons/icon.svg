@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!--
+    Doujin Library - Favicon
+    Tema: latar gelap #15120f + merah hanko #c1443a + aksen emas #c79a3a
+    Huruf "D" digambar manual sebagai path (tanpa dependensi font),
+    supaya hasil render konsisten di semua browser dan di script generate-icons.mjs.
+  -->
+  <defs>
+    <pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="2" fill="#ece6dc" opacity="0.05"/>
+    </pattern>
+  </defs>
+
+  <!-- latar gelap, sudut membulat ala app icon -->
+  <rect width="512" height="512" rx="96" fill="#15120f"/>
+  <rect width="512" height="512" rx="96" fill="url(#dots)"/>
+  <rect x="10" y="10" width="492" height="492" rx="88" fill="none" stroke="#322a22" stroke-width="8"/>
+
+  <!-- huruf "D" gaya stempel hanko -->
+  <path
+    d="M150 130 H270 C350 130 390 175 390 256 C390 337 350 382 270 382 H150 Z
+       M225 195 H265 C305 195 320 218 320 256 C320 294 305 317 265 317 H225 Z"
+    fill="#c1443a"
+    fill-rule="evenodd"/>
+
+  <!-- aksen emas kecil, ala titik rating -->
+  <circle cx="398" cy="112" r="20" fill="#c79a3a"/>
+</svg>
