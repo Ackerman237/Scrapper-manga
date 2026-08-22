@@ -5,9 +5,14 @@ import {
   scrapeNekoSearch,
   scrapeNekoDetail,
   scrapeNekoCategories,
+  scrapeNekoSchedule,
+  scrapeNekoSeriesList,
+  scrapeNekoRandom,
 } from '../lib/scraper/nekoScraper.js';
-import { validatePage, validateCategory, validateQuery, validateSlug, validateUrl } from '../lib/validator.js';
+import { validatePage, validateCategory, validateQuery, validateSlug, validateUrl, validateEnum } from '../lib/validator.js';
 import logger from '../lib/logger.js';
+
+const NEKO_SERIES_TYPES = new Set(['hentai', 'jav']);
 
 export const getNekoList = async (req, res) => {
   try {
@@ -83,6 +88,44 @@ export const getNekoCategories = async (_req, res) => {
   } catch (err) {
     logger.error({ err }, 'getNekoCategories error');
     return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+export const getNekoSchedule = async (_req, res) => {
+  try {
+    const data = await scrapeNekoSchedule();
+    return res.json({ success: true, data });
+  } catch (err) {
+    logger.error({ err }, 'getNekoSchedule error');
+    return res.status(503).json({ success: false, message: 'Jadwal sementara tidak tersedia' });
+  }
+};
+
+export const getNekoSeriesList = async (req, res) => {
+  try {
+    const page = validatePage(req.query.page);
+    const type = validateEnum(req.query.type, NEKO_SERIES_TYPES, 'hentai');
+    const data = await scrapeNekoSeriesList(type, page);
+    return res.json({ success: true, data });
+  } catch (err) {
+    logger.error({ err }, 'getNekoSeriesList error');
+    if (err?.message?.includes('HTTP 404')) {
+      return res.status(404).json({ success: false, message: 'Daftar seri tidak ditemukan' });
+    }
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+export const getNekoRandom = async (_req, res) => {
+  try {
+    const data = await scrapeNekoRandom();
+    return res.json({ success: true, data });
+  } catch (err) {
+    logger.error({ err }, 'getNekoRandom error');
+    if (err?.name === 'AbortError' || err?.message?.includes('Timeout')) {
+      return res.status(504).json({ success: false, message: 'Timeout mencari video acak' });
+    }
+    return res.status(502).json({ success: false, message: 'Gagal mengambil video acak' });
   }
 };
 

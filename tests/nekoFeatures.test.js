@@ -1,0 +1,141 @@
+// nekoFeatures.test.js — Unit test offline untuk fitur nekopoi baru:
+// jadwal, daftar seri, random, dan related videos di detail.
+// Semua fetch di-stub — tidak ada network call.
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('../lib/vpn/vpnManager.js', () => ({
+  ensureVpn: vi.fn(async () => ({ provider: null })),
+  reportFailure: vi.fn(),
+  reportSuccess: vi.fn(),
+}));
+
+const fetchMock = vi.fn();
+vi.stubGlobal('fetch', fetchMock);
+
+import {
+  scrapeNekoSchedule,
+  scrapeNekoSeriesList,
+  scrapeNekoRandom,
+  _clearNekoCacheForTests,
+} from '../lib/scraper/nekoScraper.js';
+
+function htmlResponse(body) {
+  return {
+    ok: true,
+    status: 200,
+    text: async () => body,
+  };
+}
+
+beforeEach(() => {
+  fetchMock.mockReset();
+  _clearNekoCacheForTests();
+});
+
+describe('scrapeNekoSchedule', () => {
+  it('mengelompokkan seri per hari sesuai heading', async () => {
+    fetchMock.mockResolvedValueOnce(
+      htmlResponse(`
+        <html><body>
+          <h2>Senin</h2>
+          <a href="https://nekopoi.care/hentai/anime-a/"><img src="https://nekopoi.care/a.jpg" alt="Anime A"></a>
+          <h3>Selasa</h3>
+          <a href="https://nekopoi.care/hentai/anime-b/">Anime B</a>
+          <a href="https://nekopoi.care/category/hentai/">Kategori (harus diabaikan)</a>
+        </body></html>
+      `)
+    );
+
+    const days = await scrapeNekoSchedule();
+
+    expect(days).toHaveLength(2);
+    expect(days[0].day).toBe('Senin');
+    expect(days[0].series).toHaveLength(1);
+    expect(days[0].series[0].slug).toBe('anime-a');
+    expect(days[0].series[0].title).toBe('Anime A');
+    expect(days[0].series[0].thumb).toContain('a.jpg');
+    expect(days[1].day).toBe('Selasa');
+    expect(days[1].series[0].title).toBe('Anime B');
+  });
+
+  it('tidak menghasilkan hari tanpa seri', async () => {
+    fetchMock.mockResolvedValueOnce(
+      htmlResponse(`
+        <html><body>
+          <h2>Rabu</h2>
+          <p>Tidak ada konten.</p>
+        </body></html>
+      `)
+    );
+
+    const days = await scrapeNekoSchedule();
+    expect(days).toHaveLength(0);
+  });
+});
+
+describe('scrapeNekoSeriesList', () => {
+  it('mem-parse item dari halaman hentai-list (struktur nk-search-item)', async () => {
+    fetchMock.mockResolvedValueOnce(
+      htmlResponse(`
+        <html><body>
+          <a href="https://nekopoi.care/hentai/series-one/" class="nk-search-item">
+            <div class="nk-search-thumb" style="background-image: url('https://nekopoi.care/s1.jpg')"></div>
+            <div class="nk-search-info">
+              <h2>Series One</h2>
+              <p class="nk-search-desc">Deskripsi seri satu.</p>
+            </div>
+          </a>
+        </body></html>
+      `)
+    );
+
+    const result = await scrapeNekoSeriesList('hentai', 1);
+
+    expect(result.type).toBe('hentai');
+    expect(result.series).toHaveLength(1);
+    expect(result.series[0].title).toBe('Series One');
+    expect(result.series[0].slug).toBe('series-one');
+  });
+
+  it('menolak type selain hentai/jav', async () => {
+    await expect(scrapeNekoSeriesList('doujin', 1)).rejects.toThrow('hentai atau jav');
+  });
+
+  it('menggunakan path page untuk halaman > 1', async () => {
+    fetchMock.mockResolvedValueOnce(htmlResponse('<html><body>kosong</body></html>'));
+
+    await scrapeNekoSeriesList('jav', 2);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const calledUrl = fetchMock.mock.calls[0][0];
+    expect(calledUrl).toContain('/jav-list/page/2/');
+  });
+});
+
+describe('scrapeNekoRandom', () => {
+  it('mengembalikan slug dari Location header redirect /random', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 302,
+      headers: { get: (name) => (name.toLowerCase() === 'location' ? 'https://nekopoi.care/hentai/random-pick/' : null) },
+    });
+
+    const result = await scrapeNekoRandom();
+
+    expect(result.slug).toBe('random-pick');
+    expect(result.url).toBe('https://nekopoi.care/hentai/random-pick/');
+    // Harus pakai redirect manual agar redirect tidak diikuti otomatis
+    expect(fetchMock.mock.calls[0][1].redirect).toBe('manual');
+  });
+
+  it('melempar error jika redirect tidak menghasilkan post', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 302,
+      headers: { get: () => '/' },
+    });
+
+    await expect(scrapeNekoRandom()).rejects.toThrow('random');
+  });
+});

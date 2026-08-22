@@ -26,8 +26,11 @@ vi.mock('../lib/scraper/nekoScraper.js', () => ({
   scrapeNekoList: vi.fn().mockResolvedValue({ videos: [], hasNext: false }),
   scrapeNekoCategory: vi.fn().mockResolvedValue({ videos: [], hasNext: false }),
   scrapeNekoSearch: vi.fn().mockResolvedValue({ videos: [], hasNext: false }),
-  scrapeNekoDetail: vi.fn().mockResolvedValue({ title: 'Test', slug: 'test', thumb: '', players: [], synopsis: '' }),
+  scrapeNekoDetail: vi.fn().mockResolvedValue({ title: 'Test', slug: 'test', thumb: '', players: [], synopsis: '', related: [] }),
   scrapeNekoCategories: vi.fn().mockResolvedValue([]),
+  scrapeNekoSchedule: vi.fn().mockResolvedValue([]),
+  scrapeNekoSeriesList: vi.fn().mockResolvedValue({ type: 'hentai', series: [], hasNext: false }),
+  scrapeNekoRandom: vi.fn().mockResolvedValue({ slug: 'test', url: 'https://nekopoi.care/test/' }),
 }));
 
 import app from '../server.js';

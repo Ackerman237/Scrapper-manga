@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Seri - Neko</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="/nekoPage/css/base.css">
+  <link rel="stylesheet" href="/nekoPage/css/index.css">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <a href="/neko/">
+          <h1>Neko Video</h1>
+        </a>
+      </div>
+      <nav class="nav-links">
+        <a href="/">MANGA</a>
+        <a href="/neko/" class="active">NEKO VIDEO</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="categories-section">
+      <div id="typeTabsContainer" class="categories-grid">
+        <button class="category-btn" data-type="hentai" type="button">DAFTAR HENTAI</button>
+        <button class="category-btn" data-type="jav" type="button">DAFTAR JAV</button>
+      </div>
+    </section>
+
+    <section class="manga-section">
+      <h2 id="sectionTitle" class="section-title">Daftar Seri Hentai</h2>
+      <div id="seriesGrid" class="video-grid">
+        <p class="loading">Memuat daftar seri...</p>
+      </div>
+      <div class="load-more-container">
+        <button id="loadMoreBtn" class="btn-see-more">SEE MORE</button>
+      </div>
+    </section>
+  </main>
+
+  <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
+
+  <script src="/nekoPage/js/series.js" defer></script>
+</body>
+</html>

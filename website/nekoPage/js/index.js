@@ -142,6 +142,82 @@ async function loadVideos(reset = false) {
   }
 }
 
+async function loadSchedule() {
+  const container = document.getElementById('scheduleContainer');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/neko/schedule');
+    const result = await res.json();
+    if (!result.success || !Array.isArray(result.data) || result.data.length === 0) {
+      container.innerHTML = '<p class="error">Jadwal belum tersedia.</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    result.data.forEach((dayGroup) => {
+      const dayWrap = document.createElement('div');
+      dayWrap.className = 'schedule-day';
+
+      const head = document.createElement('h3');
+      head.className = 'schedule-day-title';
+      head.textContent = dayGroup.day || '-';
+      dayWrap.appendChild(head);
+
+      const list = document.createElement('div');
+      list.className = 'schedule-series-list';
+
+      (dayGroup.series || []).forEach((item) => {
+        const card = document.createElement('a');
+        card.className = 'schedule-card';
+        card.href = `/nekoPage/html/watch.html?slug=${encodeURIComponent(item.slug)}`;
+
+        const thumbUrl = item.thumb || 'https://placehold.co/100x140?text=?';
+        const title = (item.title || '').replace(/[&"<>]/g, m => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[m]));
+
+        card.innerHTML = `
+          <img src="${thumbUrl}" alt="${title}" loading="lazy" referrerpolicy="no-referrer">
+          <span class="schedule-card-title">${title}</span>
+        `;
+        list.appendChild(card);
+      });
+
+      if ((dayGroup.series || []).length === 0) {
+        list.innerHTML = '<p class="error">Tidak ada seri terjadwal.</p>';
+      }
+
+      dayWrap.appendChild(list);
+      container.appendChild(dayWrap);
+    });
+  } catch (err) {
+    console.error('Gagal memuat jadwal:', err);
+    container.innerHTML = '<p class="error">Gagal memuat jadwal.</p>';
+  }
+}
+
+async function setupRandomButton() {
+  const btn = document.getElementById('randomBtn');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'MENCARI...';
+    try {
+      const res = await fetch('/api/neko/random');
+      const result = await res.json();
+      if (!result.success || !result.data?.slug) throw new Error(result.message || 'Gagal');
+      window.location.href = `/nekoPage/html/watch.html?slug=${encodeURIComponent(result.data.slug)}`;
+    } catch (err) {
+      console.error('Gagal ambil video acak:', err);
+      alert('Gagal mengambil video acak, coba lagi.');
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+}
+
 function setupBackToTop(btn, offset) {
   if (!btn) return;
   const sync = () => btn.classList.toggle('show', window.scrollY > (offset || 400));
@@ -167,5 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupBackToTop(backToTopBtn, 300);
 
   loadCategories();
+  loadSchedule();
+  setupRandomButton();
   loadVideos(true);
 });
