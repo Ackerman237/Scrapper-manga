@@ -127,6 +127,32 @@
   gap: 18px;
 }
 
+/* --- Popular Row --- */
+.popular-row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.popular-row .manga-card {
+  flex: 0 0 150px;
+  width: 150px;
+}
+
+.popular-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.popular-row::-webkit-scrollbar-thumb {
+  background: var(--border-soft, #3a352e);
+  border-radius: 3px;
+}
+
+@media (max-width: 600px) {
+  .popular-row .manga-card { flex-basis: 120px; width: 120px; }
+}
+
 .manga-card {
   position: relative;
   background: var(--card);

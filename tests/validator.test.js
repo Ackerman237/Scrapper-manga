@@ -7,6 +7,7 @@ import {
   validateId,
   validateCategory,
   validateUrl,
+  validateEnum,
 } from '../lib/validator.js';
 
 describe('validatePage', () => {
@@ -154,5 +155,29 @@ describe('validateUrl', () => {
 
   it('accepts https url', () => {
     expect(validateUrl('https://example.com/path?q=1')).toBe('https://example.com/path?q=1');
+  });
+});
+
+describe('validateEnum', () => {
+  const ALLOWED = new Set(['ongoing', 'completed', 'hiatus']);
+
+  it('returns fallback for non-string', () => {
+    expect(validateEnum(123, ALLOWED, '')).toBe('');
+  });
+
+  it('returns fallback for value outside whitelist', () => {
+    expect(validateEnum('random-value', ALLOWED, '')).toBe('');
+  });
+
+  it('is case-insensitive and trims', () => {
+    expect(validateEnum('  Ongoing ', ALLOWED, '')).toBe('ongoing');
+  });
+
+  it('returns matched lowercase value', () => {
+    expect(validateEnum('completed', ALLOWED, '')).toBe('completed');
+  });
+
+  it('returns custom fallback when provided', () => {
+    expect(validateEnum(undefined, ALLOWED, 'newest')).toBe('newest');
   });
 });

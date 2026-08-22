@@ -5,10 +5,12 @@ import {
   scrapeChapterImages,
   scrapeGenres,
 } from '../lib/scraper/index.js';
-import { validatePage, validateLimit, validateQuery, validateSlug, validateId, validateCategory } from '../lib/validator.js';
+import { validatePage, validateLimit, validateQuery, validateSlug, validateId, validateCategory, validateEnum } from '../lib/validator.js';
 import logger from '../lib/logger.js';
 
 const VALID_SORTS = new Set(['newest', 'rating', 'title']);
+const VALID_STATUSES = new Set(['ongoing', 'completed', 'hiatus']);
+const VALID_TYPES = new Set(['manga', 'manhwa', 'manhua']);
 
 export const getMangaList = async (req, res) => {
   try {
@@ -16,9 +18,11 @@ export const getMangaList = async (req, res) => {
     const limit = validateLimit(req.query.limit);
     const query = validateQuery(req.query.query);
     const genre = validateCategory(req.query.genre) || '';
-    const sort = VALID_SORTS.has(req.query.sort) ? req.query.sort : 'newest';
+    const sort = validateEnum(req.query.sort, VALID_SORTS, 'newest');
+    const status = validateEnum(req.query.status, VALID_STATUSES, '');
+    const type = validateEnum(req.query.type, VALID_TYPES, '');
 
-    const result = await scrapeMangaList({ page, limit, query, genre, sort, withMeta: true });
+    const result = await scrapeMangaList({ page, limit, query, genre, status, type, sort, withMeta: true });
     const data = result.data;
     const total = result.total;
     const totalPages = Number.isFinite(total) ? Math.ceil(total / limit) : null;

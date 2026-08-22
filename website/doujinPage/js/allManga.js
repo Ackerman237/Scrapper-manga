@@ -7,6 +7,8 @@ let currentPage = parseInt(urlParams.get('page')) || 1;
 let currentQuery = urlParams.get('query') || '';
 let currentSort = urlParams.get('sort') || 'newest';
 let currentGenre = urlParams.get('genre') || '';
+let currentStatus = urlParams.get('status') || '';
+let currentType = urlParams.get('type') || '';
 
 if (currentPage < 1) currentPage = 1;
 
@@ -30,7 +32,7 @@ async function loadGenres() {
   }
 }
 
-async function loadManga(query = '', page = 1, sort = 'newest', genre = '') {
+async function loadManga(query = '', page = 1, sort = 'newest', genre = '', status = '', type = '') {
   const grid = document.getElementById('mangaGrid');
   const sectionTitle = document.getElementById('sectionTitle');
 
@@ -43,6 +45,8 @@ async function loadManga(query = '', page = 1, sort = 'newest', genre = '') {
     if (query) endpoint += `&query=${encodeURIComponent(query)}`;
     if (sort && sort !== 'newest') endpoint += `&sort=${encodeURIComponent(sort)}`;
     if (genre) endpoint += `&genre=${encodeURIComponent(genre)}`;
+    if (status) endpoint += `&status=${encodeURIComponent(status)}`;
+    if (type) endpoint += `&type=${encodeURIComponent(type)}`;
 
     const result = await fetchJsonWithTimeout(endpoint);
     const mangaList = Array.isArray(result) ? result : (result.data || result.results || []);
@@ -94,18 +98,24 @@ async function loadManga(query = '', page = 1, sort = 'newest', genre = '') {
 
   } catch (error) {
     console.error('Fetch Error:', error);
-    showError(grid, formatFetchError(error, 'Gagal mengambil data manga.'), () => loadManga(query, page, sort, genre));
+    showError(grid, formatFetchError(error, 'Gagal mengambil data manga.'), () => loadManga(query, page, sort, genre, status, type));
   }
 }
 
-function goToPage(page) {
-  if (page < 1) return;
+function buildListParams(page) {
   const params = new URLSearchParams();
   params.set('page', String(page));
   if (currentQuery) params.set('query', currentQuery);
   if (currentSort && currentSort !== 'newest') params.set('sort', currentSort);
   if (currentGenre) params.set('genre', currentGenre);
-  window.location.href = `/doujinPage/html/allManga.html?${params.toString()}`;
+  if (currentStatus) params.set('status', currentStatus);
+  if (currentType) params.set('type', currentType);
+  return params;
+}
+
+function goToPage(page) {
+  if (page < 1) return;
+  window.location.href = `/doujinPage/html/allManga.html?${buildListParams(page).toString()}`;
 }
 
 function renderPagination(pagination) {
@@ -144,11 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
       currentQuery = searchInput ? searchInput.value.trim() : '';
-      const params = new URLSearchParams();
-      params.set('page', '1');
-      if (currentQuery) params.set('query', currentQuery);
-      if (currentSort && currentSort !== 'newest') params.set('sort', currentSort);
-      if (currentGenre) params.set('genre', currentGenre);
+      const params = buildListParams(1);
       window.location.href = `/doujinPage/html/allManga.html?${params.toString()}`;
     });
   }
@@ -167,10 +173,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const statusSelect = document.getElementById('statusSelect');
+  const typeSelect = document.getElementById('typeSelect');
+
+  if (statusSelect) {
+    statusSelect.value = currentStatus;
+    statusSelect.addEventListener('change', () => {
+      currentStatus = statusSelect.value;
+      goToPage(1);
+    });
+  }
+
+  if (typeSelect) {
+    typeSelect.value = currentType;
+    typeSelect.addEventListener('change', () => {
+      currentType = typeSelect.value;
+      goToPage(1);
+    });
+  }
+
   setupBackToTop(backToTopBtn, 300);
 
   loadGenres();
-  loadManga(currentQuery, currentPage, currentSort, currentGenre);
+  loadManga(currentQuery, currentPage, currentSort, currentGenre, currentStatus, currentType);
 
   // Perbaiki cover yang hilang saat kembali dari reader via browser back button (bfcache).
   // Saat halaman di-restore dari bfcache, gambar dengan loading="lazy" yang belum masuk

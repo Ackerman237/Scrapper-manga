@@ -223,6 +223,8 @@ async function renderDetail() {
     if (el("detailLoading")) el("detailLoading").style.display = "none";
     if (el("detailLayout")) el("detailLayout").style.display = "grid";
 
+    loadRecommendations(mangaSlug, genresArr);
+
   } catch (err) {
     console.error(err);
     if (el("detailLoading")) el("detailLoading").style.display = "none";
@@ -250,6 +252,32 @@ async function renderDetail() {
       });
       el("detailError").after(retryBtn);
     }
+  }
+}
+
+async function loadRecommendations(currentSlug, genresArr) {
+  const section = el("recommendSection");
+  const grid = el("recommendGrid");
+  if (!section || !grid) return;
+
+  // Pakai genre pertama sebagai dasar kemiripan; tanpa genre = tidak ada rekomendasi
+  const firstGenre = Array.isArray(genresArr) && genresArr.length > 0 ? String(genresArr[0]).trim() : "";
+  if (!firstGenre) return;
+
+  try {
+    const endpoint = `/api/manga?genre=${encodeURIComponent(firstGenre.toLowerCase().replace(/\s+/g, "-"))}&limit=12`;
+    const result = await fetchJsonWithTimeout(endpoint);
+    const mangaList = (Array.isArray(result) ? result : (result.data || result.results || []))
+      .filter((m) => m && m.slug !== currentSlug)
+      .slice(0, 6);
+
+    if (mangaList.length === 0) return;
+
+    grid.innerHTML = "";
+    mangaList.forEach((m) => grid.appendChild(renderMangaCard(m)));
+    section.style.display = "block";
+  } catch {
+    // Rekomendasi bersifat best-effort — kegagalan tidak perlu ditampilkan ke user
   }
 }
 
