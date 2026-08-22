@@ -78,20 +78,14 @@ server.log
 server.err
 server-test.err
 
+# Agent/AI tool configs (internal, jangan push ke GitHub)
+.agents/
+.opencode/
+.opencode/.gitignore
+
 # AI tool configs (contains API keys)
 opencode.json
 opencode.jsonc
-
-# Kiro agent configs (internal, tidak perlu di repo)
-.agents/
-
-# opencode internal runtime files (API keys, lock files)
-# .opencode/agents/*.md tetap di-push (berisi instruksi agent, bukan secrets)
-.opencode/package.json
-.opencode/package-lock.json
-.opencode/bun.lock
-.opencode/.gitignore
-.opencode/node_modules/
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
