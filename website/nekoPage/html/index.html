@@ -16,23 +16,29 @@
           <h1>Neko Video</h1>
         </a>
       </div>
-      <nav class="nav-links">
+      <nav class="nav-links" id="navLinks">
         <a href="/">MANGA</a>
         <a href="/neko/" class="active">NEKO VIDEO</a>
+        <div class="nav-dropdown" id="categoriesDropdown">
+          <button type="button" class="nav-drop-toggle" aria-expanded="false" aria-haspopup="true">CATEGORIES ▾</button>
+          <div class="nav-drop-menu">
+            <p class="nav-drop-loading">Memuat kategori...</p>
+          </div>
+        </div>
       </nav>
       <form id="searchForm" class="search-box">
         <input type="text" id="searchInput" placeholder="Cari video Neko...">
         <button type="submit">CARI</button>
       </form>
+      <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
 
   <main>
-    <!-- Kontainer Pilihan Genre / Kategori -->
+    <!-- Aksi cepat (kategori kini lewat dropdown CATEGORIES di navbar) -->
     <section class="categories-section">
-      <div id="categoriesContainer" class="categories-grid">
-        <!-- Tombol kategori akan dimuat secara dinamis lewat JavaScript -->
-      </div>
       <div class="categories-actions">
         <button id="randomBtn" class="category-btn random-btn" type="button">🎲 ACAK</button>
         <a class="category-btn" href="/nekoPage/html/series.html?type=hentai">DAFTAR HENTAI</a>
@@ -61,6 +67,7 @@
 
   <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
 
+  <script src="/nekoPage/js/nav.js" defer></script>
   <script src="/nekoPage/js/index.js" defer></script>
 </body>
 </html>

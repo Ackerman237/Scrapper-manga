@@ -1,34 +1,11 @@
 /* =========================================================
    Neko Video — WATCH PAGE (upgraded)
-   Nav bar sticky, header judul + badge streaming, player card
-   dengan shadow, server selector jadi pill, loading pakai
-   spinner, panel sinopsis rapi.
+   Header standar dari base.css dipakai di watch.html
+   (nav-header lama sudah diganti). Player card dengan shadow,
+   server selector jadi pill, loading pakai spinner, panel
+   sinopsis rapi.
    Load setelah base.css. Khusus dipakai di watch.html.
    ========================================================= */
-
-/* ---------- top nav bar ---------- */
-
-.nav-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  padding: 15px 24px;
-  background: rgba(21, 18, 15, 0.85);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  gap: 20px;
-}
-.nav-header a {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: color 0.15s ease;
-}
-.nav-header a:hover { color: var(--ink); }
 
 /* ---------- layout shell ---------- */
 
@@ -263,4 +240,25 @@
 }
 .related-grid .video-card {
   cursor: pointer;
+}
+
+/* ---------- recovery: daftar episode & acak ulang ---------- */
+.episode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 60vh;
+  overflow-y: auto;
+  text-align: left;
+}
+.episode-list .server-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.random-retry-btn {
+  margin-top: 12px;
 }

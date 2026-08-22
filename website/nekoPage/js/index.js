@@ -1,7 +1,7 @@
 // nekoPage/js/index.js — Neko Video list page
 
 let currentOffset = 1;
-let currentCategory = '';
+let currentCategory = new URLSearchParams(window.location.search).get('category') || '';
 let currentQuery = '';
 
 function renderVideoCard(video) {
@@ -30,50 +30,6 @@ function renderVideoCard(video) {
   }
 
   return card;
-}
-
-async function loadCategories() {
-  const container = document.getElementById('categoriesContainer');
-  if (!container) return;
-
-  try {
-    const res = await fetch('/api/neko/categories');
-    const result = await res.json();
-    if (!result.success || !Array.isArray(result.data)) return;
-
-    container.innerHTML = '';
-
-    const allBtn = document.createElement('button');
-    allBtn.className = 'category-btn active';
-    allBtn.textContent = 'ALL';
-    allBtn.addEventListener('click', () => {
-      currentCategory = '';
-      currentQuery = '';
-      currentOffset = 1;
-      container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-      allBtn.classList.add('active');
-      loadVideos(true);
-    });
-    container.appendChild(allBtn);
-
-    result.data.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = 'category-btn';
-      btn.textContent = cat.name || cat.slug;
-      btn.addEventListener('click', () => {
-        // Reset query saat pindah kategori agar filter bersih
-        currentQuery = '';
-        currentCategory = cat.slug;
-        currentOffset = 1;
-        container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        loadVideos(true);
-      });
-      container.appendChild(btn);
-    });
-  } catch (err) {
-    console.error('Gagal memuat kategori:', err);
-  }
 }
 
 async function loadVideos(reset = false) {
@@ -242,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupBackToTop(backToTopBtn, 300);
 
-  loadCategories();
   loadSchedule();
   setupRandomButton();
   loadVideos(true);

@@ -16,10 +16,19 @@
           <h1>Neko Video</h1>
         </a>
       </div>
-      <nav class="nav-links">
+      <nav class="nav-links" id="navLinks">
         <a href="/">MANGA</a>
         <a href="/neko/" class="active">NEKO VIDEO</a>
+        <div class="nav-dropdown" id="categoriesDropdown">
+          <button type="button" class="nav-drop-toggle" aria-expanded="false" aria-haspopup="true">CATEGORIES ▾</button>
+          <div class="nav-drop-menu">
+            <p class="nav-drop-loading">Memuat kategori...</p>
+          </div>
+        </div>
       </nav>
+      <button class="nav-hamburger" id="navHamburger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
 
@@ -44,6 +53,7 @@
 
   <button id="backToTop" class="back-to-top" title="Kembali ke atas">▲</button>
 
+  <script src="/nekoPage/js/nav.js" defer></script>
   <script src="/nekoPage/js/series.js" defer></script>
 </body>
 </html>
